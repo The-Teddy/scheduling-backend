@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity('email_codes')
 export class EmailEntity {
   @PrimaryGeneratedColumn()
   id: number;

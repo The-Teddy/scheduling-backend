@@ -6,18 +6,18 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity('users')
 export class UserEntity {
   @PrimaryColumn('binary', { length: 16 })
   id: Buffer;
 
-  @Column({ length: 100 })
+  @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ length: 200 })
+  @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @Column({ length: 500 })
+  @Column({ type: 'varchar', length: 60 })
   password: string;
 
   @Column({
@@ -29,8 +29,19 @@ export class UserEntity {
     default: false,
   })
   emailVerified: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  logo?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  cover?: string;
+
+  @Column({ type: 'varchar', length: 18, nullable: true })
+  document?: string;
+
   @CreateDateColumn()
   createdAt: Date;
+
   @UpdateDateColumn()
   updatedAt: Date;
 }

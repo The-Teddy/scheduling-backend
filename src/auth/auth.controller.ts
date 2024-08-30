@@ -31,7 +31,7 @@ export class AuthController {
   ): Promise<any> {
     try {
       const user = await this.authService.login(
-        authUserDto.email,
+        authUserDto.email.toLowerCase(),
         authUserDto.password,
         authUserDto.codeEmail,
       );

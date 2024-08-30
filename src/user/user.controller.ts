@@ -1,16 +1,25 @@
 import { EmailService } from 'src/email/email.service';
-import { Body, Controller, Post, Res } from '@nestjs/common';
-import { Response } from 'express';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Res,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { Response, Request } from 'express';
 import { UserService } from './user.service';
-import { UtilityService } from 'src/utility/Utility.service';
 import { CreateUserDto } from './create.user.dto';
+import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly emailService: EmailService,
-    private readonly utilityService: UtilityService,
   ) {}
 
   @Post('create')
@@ -19,13 +28,49 @@ export class UserController {
     @Res() response: Response,
   ): Promise<any> {
     try {
-      await this.userService.create(createUserDto);
+      const userCreated = await this.userService.create(createUserDto);
+      if (!userCreated) {
+        return response
+          .status(HttpStatus.CONFLICT)
+          .json({ message: 'Este email já esta sendo utilizado.' });
+      }
 
       await this.emailService.sendEmailCode(createUserDto.email, false);
       return response.sendStatus(200);
     } catch (error) {
       console.log(error);
-      return response.status(500).json({ message: error.message });
+      throw new HttpException(
+        'Um erro interno ocorreu... Tente novamente mais tarde.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async getUser(
+    @Req() request: Request,
+    @Res() response: Response,
+  ): Promise<any> {
+    try {
+      const { id }: any = request.user;
+      const uuidBuffer = Buffer.from(id.data);
+
+      const user = await this.userService.findOneById(uuidBuffer);
+      if (!user) {
+        return response
+          .status(HttpStatus.NOT_FOUND)
+          .json({ message: 'Usuário não encontrado.' });
+      }
+      const { password, ...rest } = user;
+
+      return response.status(200).json({ data: rest });
+    } catch (error) {
+      console.error(error);
+
+      throw new HttpException(
+        'Um erro interno ocorreu... Tente novamente mais tarde.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

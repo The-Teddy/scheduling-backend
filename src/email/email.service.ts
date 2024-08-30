@@ -158,7 +158,7 @@ export class EmailService {
     email: string,
     code: string | null,
   ): Promise<VerifyAndSendEmailCodeInterface> {
-    const user = await this.userService.findOne(email);
+    const user = await this.userService.findOneByEmail(email);
 
     //verifica a existência do usuário na base de dados
     if (!user) {
