@@ -76,14 +76,20 @@ export class UserService {
     await this.emailService.deleteCodeEmail(email);
     return await this.userRepository.save(user);
   }
-  async updateLogoUser(
+  async updateImageUser(
     id: Buffer,
-    logoPath: string,
+    logoPath: string | null,
+    coverPath: string | null,
   ): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({
       where: { id },
     });
-    user.logo = logoPath;
+    if (logoPath) {
+      user.logo = logoPath;
+    }
+    if (coverPath) {
+      user.cover = coverPath;
+    }
     return await this.userRepository.save(user);
   }
 }

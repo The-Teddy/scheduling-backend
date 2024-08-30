@@ -5,14 +5,13 @@ import {
   Req,
   Res,
   Controller,
-  Body,
   UseGuards,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
-import * as fs from 'fs'; // Importe o módulo fs
+import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
@@ -40,13 +39,13 @@ export class UploadController {
     @Res() response: Response,
   ): Promise<any> {
     try {
-      const { id, logo }: any = request.user;
+      const { id }: any = request.user;
       const uuidBuffer = Buffer.from(id.data);
+      const oldPathLogo = request.body.old_path_logo;
+      await this.uploadService.updateImageUser(uuidBuffer, file.path, null);
 
-      await this.uploadService.updateLogoUser(uuidBuffer, file.path);
-
-      if (logo) {
-        fs.unlink(logo, (error) => {
+      if (oldPathLogo) {
+        fs.unlink(oldPathLogo, (error) => {
           if (error) {
             console.error(error);
           } else {
@@ -55,15 +54,17 @@ export class UploadController {
         });
       }
 
-      return response.sendStatus(200);
+      return response.status(200).json({ message: 'Upload feito com sucesso' });
     } catch (error) {
-      fs.unlink(file.path, function (err) {
-        if (err) {
-          console.log(err);
-        } else {
-          console.log('File deleted!');
-        }
-      });
+      if (file) {
+        fs.unlink(file.path, function (err) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log('File deleted!');
+          }
+        });
+      }
       throw new HttpException(
         'Um erro interno ocorreu... Tente novamente mais tarde.',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -89,28 +90,35 @@ export class UploadController {
     @Res() response: Response,
   ): Promise<any> {
     try {
-      const { id, logo }: any = request.user;
+      const { id }: any = request.user;
       const uuidBuffer = Buffer.from(id.data);
+      const oldPathCover = request.body.old_path_cover;
 
-      await this.uploadService.updateLogoUser(uuidBuffer, file.path);
+      console.log('oldVover:? ', oldPathCover);
 
-      fs.unlink(logo, (error) => {
-        if (error) {
-          console.error(error);
-        } else {
-          console.log('file deleted');
-        }
-      });
+      await this.uploadService.updateImageUser(uuidBuffer, null, file.path);
+
+      if (oldPathCover) {
+        fs.unlink(oldPathCover, (error) => {
+          if (error) {
+            console.error(error);
+          } else {
+            console.log('file deleted');
+          }
+        });
+      }
       return response.sendStatus(200);
     } catch (error) {
       console.error(error);
-      fs.unlink(file.path, (error) => {
-        if (error) {
-          console.error(error);
-        } else {
-          console.log('file deleted');
-        }
-      });
+      if (file) {
+        fs.unlink(file.path, (error) => {
+          if (error) {
+            console.error(error);
+          } else {
+            console.log('file deleted');
+          }
+        });
+      }
       throw new HttpException(
         'Um erro interno ocorreu... Tente novamente mais tarde.',
         HttpStatus.INTERNAL_SERVER_ERROR,
