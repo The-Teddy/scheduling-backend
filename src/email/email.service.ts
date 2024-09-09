@@ -3,7 +3,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Repository } from 'typeorm';
 import { EmailEntity } from './email.entity';
 import { UserService } from 'src/user/user.service';
-import { UserEntity } from 'src/user/user.entity';
+import { UserEntity } from 'src/database/entities/user.entity';
 import { UtilityService } from 'src/utility/Utility.service';
 import {
   BooleanObject,

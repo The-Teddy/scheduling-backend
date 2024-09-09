@@ -66,6 +66,8 @@ export class AuthService {
       id: user.id,
       emailVerified: user.emailVerified,
       isActive: user.isActive,
+      logo: user.logo,
+      cover: user.cover,
     };
 
     return {

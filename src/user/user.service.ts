@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { UserEntity } from './user.entity';
+import { UserEntity } from '../database/entities/user.entity';
 import { CreateUserDto } from './create.user.dto';
 import { hashSync as encrypt } from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -85,10 +85,10 @@ export class UserService {
       where: { id },
     });
     if (logoPath) {
-      user.logo = logoPath;
+      // user.logo = logoPath;
     }
     if (coverPath) {
-      user.cover = coverPath;
+      // user.cover = coverPath;
     }
     return await this.userRepository.save(user);
   }
