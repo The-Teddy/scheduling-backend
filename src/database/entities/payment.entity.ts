@@ -2,9 +2,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { AppointmentEntity } from './appointment.entity';
 
@@ -13,21 +13,27 @@ export class PaymentEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => AppointmentEntity, (appointment) => appointment.payments)
-  appointment: AppointmentEntity;
+  @Column({ type: 'int' })
+  appointmentId: number;
 
-  @Column('decimal', { precision: 5, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2 })
   amount: number;
 
-  @Column({ default: 'pending' })
-  status: string;
+  @Column({ type: 'varchar', length: 20 })
+  paymentStatus: string;
 
-  @Column({ nullable: true })
-  paymentMethod: string;
+  @Column({ type: 'int' })
+  paymentMethodId: number;
+
+  @Column({ type: 'varchar', length: 100 })
+  paymentMethodName: string;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToOne(() => AppointmentEntity, (appointment) => appointment.payments)
+  appointment: AppointmentEntity;
 }

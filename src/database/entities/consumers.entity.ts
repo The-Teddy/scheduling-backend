@@ -13,14 +13,17 @@ export class ConsumerEntity {
   @PrimaryColumn('binary', { length: 16 })
   id: Buffer;
 
+  @Column({ type: 'binary', length: 16 })
+  providerId: Buffer;
+
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column({ unique: true })
-  email: string;
-
-  @Column({ type: 'varchar', length: 15, nullable: true })
+  @Column({ type: 'varchar', length: 30 })
   phone: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastAppointment: Date;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -28,6 +31,6 @@ export class ConsumerEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => AppointmentEntity, (appointment) => appointment.client)
+  @OneToMany(() => AppointmentEntity, (appointment) => appointment.consumer)
   appointments: AppointmentEntity[];
 }

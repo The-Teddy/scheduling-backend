@@ -8,29 +8,25 @@ import {
 } from 'typeorm';
 import { ProviderEntity } from './providers.entity';
 
-@Entity('availabilities')
-export class AvailabilityEntity {
+@Entity('payment_methods')
+export class PaymentMethodsEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
-  dayOfWeek: number;
+  @Column({ type: 'varchar', length: '100' })
+  name: string;
 
-  @Column({ type: 'time' })
-  startTime: string;
-
-  @Column({ type: 'time' })
-  endTime: string;
+  @Column({ type: 'varchar', length: '255', nullable: true })
+  description: string;
 
   @Column({ type: 'boolean', default: true })
-  isRecurring: boolean;
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @ManyToOne(() => ProviderEntity, (provider) => provider.availabilities)
+  @ManyToOne(() => ProviderEntity, (provider) => provider.paymentMethods)
   provider: ProviderEntity;
 }

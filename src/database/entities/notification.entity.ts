@@ -6,17 +6,20 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserEntity } from './user.entity';
+import { ProviderEntity } from './providers.entity';
 
 @Entity('notifications')
 export class NotificationEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => UserEntity, (user) => user.notifications)
-  user: UserEntity;
+  @Column({ type: 'binary', length: 16 })
+  consumerId: Buffer;
 
-  @Column()
+  @Column({ type: 'varchar', length: 100 })
+  consumerName: string;
+
+  @Column({ type: 'varchar', length: 255 })
   message: string;
 
   @Column({ default: false })
@@ -27,4 +30,7 @@ export class NotificationEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => ProviderEntity, (provider) => provider.notifications)
+  provider: ProviderEntity;
 }

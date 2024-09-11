@@ -5,26 +5,34 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { ConsumerEntity } from './consumers.entity';
 import { ServiceEntity } from './service.entity';
-import { UserEntity } from './user.entity';
 import { PaymentEntity } from './payment.entity';
+import { ProviderEntity } from './providers.entity';
+import { AppointmentStatus } from '../../enums/appointment.status.enum';
 
 @Entity('appointments')
 export class AppointmentEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  user_id: Buffer;
-
   @Column({ type: 'timestamp' })
   date: Date;
 
-  @Column({ default: 'pending' })
-  status: string;
+  @Column({
+    type: 'enum',
+    enum: AppointmentStatus,
+    default: AppointmentStatus.PENDING,
+  })
+  status: AppointmentStatus;
+
+  @Column({ type: 'int' })
+  duration: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  notes: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -32,14 +40,14 @@ export class AppointmentEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => ConsumerEntity, (client) => client.appointments)
-  client: ConsumerEntity;
+  @ManyToOne(() => ConsumerEntity, (consumer) => consumer.appointments)
+  consumer: ConsumerEntity;
 
-  @ManyToOne(() => UserEntity, (user) => user.appointments)
-  user: UserEntity;
+  @ManyToOne(() => ProviderEntity, (provider) => provider.appointments)
+  provider: ProviderEntity;
 
   @ManyToOne(() => ServiceEntity, (service) => service.appointments)
   service: ServiceEntity;
-  @OneToMany(() => PaymentEntity, (payment) => payment.appointment)
-  payments: PaymentEntity[];
+  @OneToOne(() => PaymentEntity, (payment) => payment.appointment)
+  payments: PaymentEntity;
 }

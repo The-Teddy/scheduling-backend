@@ -3,14 +3,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
   PrimaryColumn,
   OneToOne,
 } from 'typeorm';
-import { AppointmentEntity } from './appointment.entity';
-import { AvailabilityEntity } from './availability.entity';
-import { ServiceEntity } from './service.entity';
-import { NotificationEntity } from './notification.entity';
 import { ProviderEntity } from './providers.entity';
 
 @Entity('users')
@@ -31,7 +26,7 @@ export class UserEntity {
   role: string;
 
   @Column({ type: 'varchar', length: 14, nullable: true })
-  cpfOrCnpj: string;
+  document: string;
 
   @Column({ default: true })
   isActive: boolean;
@@ -45,17 +40,6 @@ export class UserEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @OneToMany(() => AppointmentEntity, (appointment) => appointment.user)
-  appointments: AppointmentEntity[];
-  @OneToMany(() => AvailabilityEntity, (availability) => availability.user)
-  availabilities: AvailabilityEntity[];
-
-  @OneToMany(() => NotificationEntity, (notification) => notification.user)
-  notifications: NotificationEntity[];
-
-  @OneToMany(() => ServiceEntity, (service) => service.user)
-  services: ServiceEntity[];
 
   @OneToOne(() => ProviderEntity, (provider) => provider.user)
   provider: ProviderEntity;
