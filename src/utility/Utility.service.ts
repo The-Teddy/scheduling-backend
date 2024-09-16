@@ -11,4 +11,7 @@ export class UtilityService {
     const expirationDate = new Date(storedDate.getTime() + limitInMilliseconds);
     return now > expirationDate;
   }
+  isPositiveInteger(value: any): boolean {
+    return Number.isInteger(value) && value > 0;
+  }
 }

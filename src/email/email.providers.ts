@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { EmailEntity } from './email.entity';
+import { EmailEntity } from '../database/entities/email.entity';
 
 export const emailProviders = [
   {

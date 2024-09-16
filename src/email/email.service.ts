@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Repository } from 'typeorm';
-import { EmailEntity } from './email.entity';
+import { EmailEntity } from '../database/entities/email.entity';
 import { UserService } from 'src/user/user.service';
 import { UserEntity } from 'src/database/entities/user.entity';
 import { UtilityService } from 'src/utility/Utility.service';

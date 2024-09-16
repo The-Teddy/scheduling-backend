@@ -63,7 +63,6 @@ export class AuthService {
     const data = {
       name: user.name,
       email: user.email,
-      id: user.id,
       emailVerified: user.emailVerified,
       isActive: user.isActive,
       logo: user.logo,

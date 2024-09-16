@@ -32,6 +32,7 @@ export class CreateUsersTable1725889223533 implements MigrationInterface {
             name: 'role',
             type: 'varchar',
             length: '50',
+            default: "'user'",
           },
           {
             name: 'document',
@@ -41,6 +42,11 @@ export class CreateUsersTable1725889223533 implements MigrationInterface {
           },
           {
             name: 'isActive',
+            type: 'boolean',
+            default: false,
+          },
+          {
+            name: 'emailVerified',
             type: 'boolean',
             default: false,
           },
