@@ -46,13 +46,13 @@ export class CreateCategoriesTable1726067756174 implements MigrationInterface {
             default: false,
           },
           {
-            name: 'approvedBy',
+            name: 'analizedBy',
             type: 'binary',
             length: '16',
             isNullable: true,
           },
           {
-            name: 'approvedByName',
+            name: 'analizedByName',
             type: 'varchar',
             length: '100',
             isNullable: true,

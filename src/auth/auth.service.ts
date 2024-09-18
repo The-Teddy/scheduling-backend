@@ -65,12 +65,22 @@ export class AuthService {
       email: user.email,
       emailVerified: user.emailVerified,
       isActive: user.isActive,
-      logo: user.logo,
-      cover: user.cover,
+      role: user.role,
+      id: user.id,
     };
 
     return {
-      data: { access_token: this.jwtService.sign(data), data },
+      data: {
+        access_token: this.jwtService.sign(data),
+        data: {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          emailVerified: user.emailVerified,
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+        },
+      },
       emailNotVerified: !user.emailVerified,
       codeIsInvalid: false,
       codeExpired: false,

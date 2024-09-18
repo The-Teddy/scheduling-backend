@@ -5,7 +5,7 @@ export interface CategoryInterface {
   observation: string;
   isActive: boolean;
   isSuggested: boolean;
-  approvedByName: string;
+  analizedByName: string;
   createdByName: string;
   approvalStatus:
     | 'pendente'

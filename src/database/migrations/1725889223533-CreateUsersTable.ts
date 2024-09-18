@@ -43,7 +43,7 @@ export class CreateUsersTable1725889223533 implements MigrationInterface {
           {
             name: 'isActive',
             type: 'boolean',
-            default: false,
+            default: true,
           },
           {
             name: 'emailVerified',

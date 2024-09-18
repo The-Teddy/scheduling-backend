@@ -1,9 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CategoryEntity } from 'src/database/entities/category.entity';
 import { Repository } from 'typeorm';
-import { CreateCategoryDTO } from './category.dto';
+import { CreateCategoryDTO, UpdateCategoryDTO } from './category.dto';
 import { UtilityService } from 'src/utility/Utility.service';
 import { CategoryInterface } from './category.interface';
+import { updateCategoryResponseInterface } from 'src/interfaces/interfaces';
 
 @Injectable()
 export class CategoryService {
@@ -30,6 +31,8 @@ export class CategoryService {
   async createCategory(
     category: CreateCategoryDTO,
     id: Buffer,
+    role: string,
+    name: string,
   ): Promise<CategoryInterface | null> {
     const existingCategory = await this.categoryRepository.findOne({
       where: {
@@ -39,11 +42,14 @@ export class CategoryService {
     if (existingCategory) {
       return null;
     }
+    const isSuggested = role === 'admin' || role === 'super-admin';
 
     const categoryData = this.categoryRepository.create({
       name: category.name,
       description: category.description,
       createdBy: id,
+      isSuggested: !isSuggested,
+      createdByName: name,
     });
 
     return this.categoryRepository.save(categoryData);
@@ -62,7 +68,7 @@ export class CategoryService {
           description: category.description,
           observation: category.observation,
           approvalStatus: category.approvalStatus,
-          approvedByName: category.approvedByName,
+          analizedByName: category.analizedByName,
           createdByName: category.createdByName,
           createdAt: category.createdAt,
           updatedAt: category.updatedAt,
@@ -73,5 +79,85 @@ export class CategoryService {
     }
 
     return null;
+  }
+  async updateCategory(
+    category: UpdateCategoryDTO,
+    id: Buffer,
+    name: string,
+    role: string,
+  ): Promise<null | updateCategoryResponseInterface> {
+    const categoryDatabase = await this.categoryRepository.findOne({
+      where: {
+        id: category.id,
+      },
+    });
+    if (!categoryDatabase) {
+      return {
+        notFound: true,
+        isUnchanged: false,
+        category: null,
+        notAuthorized: false,
+      };
+    }
+    if (categoryDatabase.approvalStatus !== 'pendente') {
+      if (role !== 'super-admin') {
+        return {
+          notFound: false,
+          isUnchanged: false,
+          category: null,
+          notAuthorized: true,
+        };
+      }
+    }
+    const isNameUnchanged = category.name === categoryDatabase?.name;
+    const isDescriptionUnchanged =
+      category.description === categoryDatabase.description;
+    const isObservationUnchanged =
+      category.observation === categoryDatabase.observation;
+
+    const isActiveUnchanged = category.isActive === categoryDatabase.isActive;
+    const isApprovalStatusUnchanged =
+      category.approvalStatus === categoryDatabase.approvalStatus;
+
+    const isInitialCategory =
+      isNameUnchanged &&
+      isDescriptionUnchanged &&
+      isObservationUnchanged &&
+      isActiveUnchanged &&
+      isApprovalStatusUnchanged;
+
+    if (isInitialCategory) {
+      return {
+        notFound: false,
+        isUnchanged: true,
+        category: null,
+        notAuthorized: false,
+      };
+    }
+    categoryDatabase.name = category.name;
+    categoryDatabase.description = category.description;
+    categoryDatabase.observation = category.observation;
+    categoryDatabase.isActive = category.isActive;
+
+    if (!categoryDatabase.analizedBy) {
+      categoryDatabase.analizedBy = id;
+    }
+    if (!categoryDatabase.analizedByName) {
+      categoryDatabase.analizedByName = name;
+    }
+
+    categoryDatabase.approvalStatus = category.approvalStatus;
+    if (category.approvalStatus === 'rejeitado') {
+      categoryDatabase.isActive = false;
+    }
+
+    const savedCategory = await this.categoryRepository.save(categoryDatabase);
+
+    return {
+      notFound: false,
+      isUnchanged: false,
+      category: savedCategory,
+      notAuthorized: false,
+    };
   }
 }

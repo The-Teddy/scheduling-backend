@@ -61,9 +61,17 @@ export class UserController {
           .status(HttpStatus.NOT_FOUND)
           .json({ message: 'Usuário não encontrado.' });
       }
-      const { password, ...rest } = user;
 
-      return response.status(200).json({ data: rest });
+      return response.status(200).json({
+        data: {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          emailVerified: user.emailVerified,
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+        },
+      });
     } catch (error) {
       console.error(error);
 

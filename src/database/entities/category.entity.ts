@@ -30,10 +30,10 @@ export class CategoryEntity {
   isSuggested: boolean;
 
   @Column({ type: 'binary', length: 16, nullable: true })
-  approvedBy: Buffer;
+  analizedBy: Buffer;
 
   @Column({ type: 'varchar', nullable: true, length: 100 })
-  approvedByName: string;
+  analizedByName: string;
 
   @Column({ type: 'varchar', nullable: true, length: 100 })
   createdByName: string;
@@ -43,11 +43,7 @@ export class CategoryEntity {
     enum: ['pendente', 'aprovado', 'rejeitado'],
     default: 'pendente',
   })
-  approvalStatus:
-    | 'pendente'
-    | 'aprovado'
-    | 'rejeitado'
-    | 'aprovado com modificação';
+  approvalStatus: 'pendente' | 'aprovado' | 'rejeitado';
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
