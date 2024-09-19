@@ -5,6 +5,8 @@ import { CreateUserDto } from './create.user.dto';
 import { hashSync as encrypt } from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from 'src/email/email.service';
+import { LoggingService } from 'src/logging/logging.service';
+import { UtilityService } from 'src/utility/Utility.service';
 
 @Injectable()
 export class UserService {
@@ -12,10 +14,33 @@ export class UserService {
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<UserEntity>,
     private readonly emailService: EmailService,
+    private readonly loggingService: LoggingService,
+    private readonly utilityService: UtilityService,
   ) {}
 
-  async findAll(): Promise<UserEntity[] | null> {
-    return this.userRepository.find();
+  async findAll(
+    page: number,
+    limit: number,
+    id: Buffer,
+    adminName: string,
+  ): Promise<UserEntity[] | null> {
+    const users = this.userRepository.find({
+      select: [
+        'name',
+        'email',
+        'role',
+        'isActive',
+        'emailVerified',
+        'createdAt',
+        'updatedAt',
+      ],
+    });
+
+    this.loggingService.info(
+      `${limit} usuários listados pelo usuário ${adminName} (id ${this.utilityService.bufferToUuid(id)}) em ${new Date().toISOString()}`,
+    );
+
+    return users;
   }
   async create(user: CreateUserDto): Promise<UserEntity | null> {
     const { name, email, password } = user;
@@ -37,15 +62,23 @@ export class UserService {
       password: encryptedPassword,
     });
 
-    return this.userRepository.save(userData);
+    const savedUser = await this.userRepository.save(userData);
+
+    return savedUser;
   }
 
   async findOneByEmail(email: string): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({ where: { email } });
+    this.loggingService.info(
+      `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} listado em ${new Date().toISOString()}`,
+    );
     return user;
   }
   async findOneById(id: Buffer): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({ where: { id } });
+    this.loggingService.info(
+      `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} listado em ${new Date().toISOString()}`,
+    );
     return user;
   }
   async verifyEmailUser(email: string): Promise<UserEntity | null> {
@@ -57,7 +90,11 @@ export class UserService {
     if (user) {
       user.emailVerified = true;
 
-      return await this.userRepository.save(user);
+      const savedUser = await this.userRepository.save(user);
+      this.loggingService.info(
+        `O email do Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} foi verificado em ${new Date().toISOString()}`,
+      );
+      return savedUser;
     }
     return null;
   }

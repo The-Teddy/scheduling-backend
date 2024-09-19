@@ -5,6 +5,7 @@ import { CreateCategoryDTO, UpdateCategoryDTO } from './category.dto';
 import { UtilityService } from 'src/utility/Utility.service';
 import { CategoryInterface } from './category.interface';
 import { updateCategoryResponseInterface } from 'src/interfaces/interfaces';
+import { LoggingService } from 'src/logging/logging.service';
 
 @Injectable()
 export class CategoryService {
@@ -12,15 +13,23 @@ export class CategoryService {
     @Inject('CATEGORY_REPOSITORY')
     private readonly categoryRepository: Repository<CategoryEntity>,
     private readonly utilityService: UtilityService,
+    private readonly loggingService: LoggingService,
   ) {}
 
-  async getAllCategories(page: number, limit: number): Promise<any> {
+  async getAllCategories(
+    page: number,
+    limit: number,
+    id: Buffer,
+  ): Promise<any> {
     const [result, total] = await this.categoryRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' }, // Ordenar pelos campos de sua escolha
     });
 
+    this.loggingService.info(
+      `${limit} categorias listadas pelo usuário de id ${this.utilityService.bufferToUuid(id)} em ${new Date().toISOString()}`,
+    );
     return {
       data: result,
       totalItems: total,
@@ -40,6 +49,10 @@ export class CategoryService {
       },
     });
     if (existingCategory) {
+      this.loggingService.warning(
+        `Tentativa de criar a categoria ${category.name} falhou: categoria já existe na base de dados. Ação realizada pelo usuário de id ${this.utilityService.bufferToUuid(id)} em ${new Date().toISOString()}.`,
+      );
+
       return null;
     }
     const isSuggested = role === 'admin' || role === 'super-admin';
@@ -52,16 +65,27 @@ export class CategoryService {
       createdByName: name,
     });
 
-    return this.categoryRepository.save(categoryData);
+    const savedCategory = await this.categoryRepository.save(categoryData);
+    this.loggingService.info(
+      `Categoria ${categoryData.name} criada pelo usuário de id ${this.utilityService.bufferToUuid(id)} em ${new Date().toISOString()}`,
+    );
+    return savedCategory;
   }
-  async getCategoryById(id: number): Promise<CategoryInterface | null> {
+  async getCategoryById(
+    id: number,
+    idUser: Buffer,
+  ): Promise<CategoryInterface | null> {
     if (this.utilityService.isPositiveInteger(id)) {
       const category = await this.categoryRepository.findOne({
         where: {
           id,
         },
       });
+
       if (category) {
+        this.loggingService.info(
+          `Categoria ${category.name} listada pelo usuário de id ${this.utilityService.bufferToUuid(idUser)} em ${new Date().toISOString()}`,
+        );
         return {
           id: category.id,
           name: category.name,
@@ -77,7 +101,9 @@ export class CategoryService {
         };
       }
     }
-
+    this.loggingService.warning(
+      `Categoria de ${id} não encontrada em ${new Date().toISOString()}`,
+    );
     return null;
   }
   async updateCategory(
@@ -92,6 +118,9 @@ export class CategoryService {
       },
     });
     if (!categoryDatabase) {
+      this.loggingService.warning(
+        `Categoria de ${category.id} não encontrada em ${new Date().toISOString()}`,
+      );
       return {
         notFound: true,
         isUnchanged: false,
@@ -101,6 +130,9 @@ export class CategoryService {
     }
     if (categoryDatabase.approvalStatus !== 'pendente') {
       if (role !== 'super-admin') {
+        this.loggingService.warning(
+          `Categoria de ${category.id} não atualizada em ${new Date().toISOString()}: Usuário de id ${this.utilityService.bufferToUuid(id)} não autorizado`,
+        );
         return {
           notFound: false,
           isUnchanged: false,
@@ -127,6 +159,9 @@ export class CategoryService {
       isApprovalStatusUnchanged;
 
     if (isInitialCategory) {
+      this.loggingService.warning(
+        `Categoria de ${category.id} não atualizada em ${new Date().toISOString()}: Não houve alteração`,
+      );
       return {
         notFound: false,
         isUnchanged: true,
@@ -153,6 +188,9 @@ export class CategoryService {
 
     const savedCategory = await this.categoryRepository.save(categoryDatabase);
 
+    this.loggingService.info(
+      `Categoria ${category.name} alterada pelo usuário de id ${this.utilityService.bufferToUuid(id)} em ${new Date().toISOString()}`,
+    );
     return {
       notFound: false,
       isUnchanged: false,

@@ -5,9 +5,15 @@ import { DatabaseModule } from 'src/database/database.module';
 import { UserModule } from 'src/user/user.module';
 import { UtilityModule } from 'src/utility/Utility.module';
 import { EmailController } from './email.controller';
+import { LoggingModule } from 'src/logging/logging.module';
 
 @Module({
-  imports: [DatabaseModule, forwardRef(() => UserModule), UtilityModule],
+  imports: [
+    DatabaseModule,
+    forwardRef(() => UserModule),
+    UtilityModule,
+    LoggingModule,
+  ],
   providers: [...emailProviders, EmailService],
   exports: [EmailService],
   controllers: [EmailController],

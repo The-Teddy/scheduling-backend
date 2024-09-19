@@ -1,8 +1,10 @@
+import { UtilityService } from 'src/utility/Utility.service';
 import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
+import { LoggingService } from 'src/logging/logging.service';
 
 @Injectable()
 export class AuthService {
@@ -10,14 +12,27 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly loggingService: LoggingService,
+    private readonly utilityService: UtilityService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.userService.findOneByEmail(email);
 
-    if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
-      return result;
+    if (user) {
+      if (await bcrypt.compare(pass, user.password)) {
+        this.loggingService.info(``);
+        const { password, ...result } = user;
+        return result;
+      } else {
+        this.loggingService.warning(
+          `Tentativa de login com o e-mail ${email} falhou: senha incorreta.`,
+        );
+      }
+    } else {
+      this.loggingService.warning(
+        `Tentativa de login com o e-mail ${email} falhou: usuário não encontrado.`,
+      );
     }
     return null;
   }
@@ -36,6 +51,10 @@ export class AuthService {
 
         if (!existingCode) {
           await this.emailService.sendEmailCode(email, false);
+          this.loggingService.warning(
+            `Código de verificação para o email ${email} não encontrado. Um novo código será enviado.`,
+          );
+
           return {
             notFound: true,
             codeIsInvalid: false,
@@ -50,6 +69,9 @@ export class AuthService {
       user = await this.emailService.verifyEmail(email, parseInt(code));
 
       if (user.invalidCode) {
+        this.loggingService.warning(
+          `Código de verificação ${code} inválido para o e-mail ${email}`,
+        );
         return {
           codeIsInvalid: true,
           credentialsIsInvalid: false,
@@ -58,6 +80,9 @@ export class AuthService {
           NotFound: false,
         };
       } else if (user.codeExpired) {
+        this.loggingService.warning(
+          `Código de verificação ${code} expirado para o e-mail ${email}`,
+        );
         return {
           codeExpired: true,
           codeIsInvalid: false,
@@ -69,6 +94,9 @@ export class AuthService {
     }
 
     if (!user.emailVerified) {
+      this.loggingService.warning(
+        `Tentativa de login com o e-mail ${email} falhou: E-mail não verificado `,
+      );
       return {
         codeExpired: false,
         codeIsInvalid: false,
@@ -86,6 +114,9 @@ export class AuthService {
       role: user.role,
       id: user.id,
     };
+    this.loggingService.info(
+      `Login bem-sucedido para o usuário de id ${this.utilityService.bufferToUuid(user.id)}`,
+    );
 
     return {
       data: {

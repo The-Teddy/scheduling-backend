@@ -9,6 +9,7 @@ import {
   BooleanObject,
   VerifyAndSendEmailCodeInterface,
 } from 'src/interfaces/interfaces';
+import { LoggingService } from 'src/logging/logging.service';
 
 @Injectable()
 export class EmailService {
@@ -19,6 +20,7 @@ export class EmailService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly utilityService: UtilityService,
+    private readonly loggingService: LoggingService,
   ) {}
 
   async verifyEmail(
@@ -206,6 +208,9 @@ export class EmailService {
         invalidCode: false,
       };
     }
+    this.loggingService.info(
+      `Um novo código de verificação foi enviado para o e-mail ${email}`,
+    );
     //um novo código sera enviado caso o email não encotre nenhum código na base de dados
     await this.sendEmailCode(email, true);
     return {

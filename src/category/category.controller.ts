@@ -15,10 +15,14 @@ import { Request, Response } from 'express';
 import { CreateCategoryDTO, UpdateCategoryDTO } from './category.dto';
 import { CategoryService } from './category.service';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
+import { LoggingService } from 'src/logging/logging.service';
 
 @Controller('category')
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(
+    private readonly categoryService: CategoryService,
+    private readonly loggingService: LoggingService,
+  ) {}
 
   @Post('create')
   @UseGuards(JwtAuthGuard)
@@ -47,9 +51,11 @@ export class CategoryController {
         .status(HttpStatus.CREATED)
         .json({ message: 'Categoria criada com sucesso' });
     } catch (error) {
-      console.error(error);
+      this.loggingService.error(
+        `Falha ao criar a categoria ${body.name}: ${error.message}`,
+      );
       throw new HttpException(
-        'Erro interno do servidor. Tente novamente mais tarde.',
+        'Falha ao criar a categoria. Por favor, tente novamente mais tarde.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -64,25 +70,52 @@ export class CategoryController {
     @Query('limit') limit: number = 10, //
   ): Promise<any> {
     try {
+      const { id }: any = request.user;
+      const uuidBuffer = Buffer.from(id.data);
+
       const categories = await this.categoryService.getAllCategories(
         page,
         limit,
+        uuidBuffer,
       );
 
       return response.status(200).json({ data: categories });
     } catch (error) {
+      this.loggingService.error(
+        `Falha ao listar as categorias: ${error.message}`,
+      );
       throw new HttpException(
-        'Um erro ocorreu durante a listagem das categorias',
+        'Falha ao listar as categoria. Por favor, tente novamente mais tarde.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
   @Get('details')
   @UseGuards(JwtAuthGuard)
-  async show(@Res() response: Response, @Query('id') id: number): Promise<any> {
-    const category = await this.categoryService.getCategoryById(Number(id));
+  async show(
+    @Res() response: Response,
+    @Req() request: Request,
+    @Query('id') idCategory: number,
+  ): Promise<any> {
+    try {
+      const { id }: any = request.user;
+      const uuidBuffer = Buffer.from(id.data);
 
-    return response.status(HttpStatus.OK).json({ category });
+      const category = await this.categoryService.getCategoryById(
+        Number(idCategory),
+        uuidBuffer,
+      );
+
+      return response.status(HttpStatus.OK).json({ category });
+    } catch (error) {
+      this.loggingService.error(
+        `Falha ao listar a categoria de id ${idCategory} em ${new Date().toISOString()}: ${error.message}`,
+      );
+      throw new HttpException(
+        'Falha ao listar a categoria. Por favor, tente novamente mais tarde.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
   @Put('update')
   @UseGuards(JwtAuthGuard)
@@ -121,8 +154,12 @@ export class CategoryController {
         .status(HttpStatus.OK)
         .json({ message: 'Categoria atualizada com sucesso' });
     } catch (error) {
+      this.loggingService.error(
+        `Falha ao atualizar a categoria "${updateCategoryDTO.name}" de id ${updateCategoryDTO.id} em ${new Date().toISOString()}: ${error.message}`,
+      );
+
       throw new HttpException(
-        'Erro interno do servidor. Tente novamente mais tarde.',
+        'Falha ao atualizar a categoria. Por favor, tente novamente mais tarde.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

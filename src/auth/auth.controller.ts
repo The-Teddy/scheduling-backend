@@ -12,6 +12,7 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthUserDto } from './auth.user.dto';
 import { EmailService } from 'src/email/email.service';
+import { LoggingService } from 'src/logging/logging.service';
 
 @Controller('auth')
 export class AuthController {
@@ -19,6 +20,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly emailService: EmailService,
     private readonly userService: UserService,
+    private readonly loggingService: LoggingService,
   ) {}
 
   @Post('login')
@@ -32,70 +34,48 @@ export class AuthController {
         authUserDto.password,
         authUserDto.codeEmail,
       );
+      const errorResponse = {
+        credentialsIsInvalid: false,
+        codeOrEmailInvalid: false,
+        emailNotVerified: false,
+        codeExpired: false,
+        message: '',
+      };
+
       if (user.notFound) {
-        return response.status(HttpStatus.BAD_REQUEST).json({
-          error: {
-            codeExpired: true,
-            credentialsIsInvalid: false,
-            emailNotVerified: false,
-            codeOrEmailInvalid: false,
-            message: 'Um novo código foi enviado para seu email.',
-          },
-        });
-      }
-      if (user.credentialsIsInvalid) {
-        return response.status(HttpStatus.BAD_REQUEST).json({
-          error: {
-            credentialsIsInvalid: true,
-            emailNotVerified: false,
-            codeOrEmailInvalid: false,
-            codeExpired: false,
-            message: 'Credenciais inválidas. Verifique o email e a senha.',
-          },
-        });
-      }
-      if (user.codeIsInvalid) {
-        return response.status(HttpStatus.BAD_REQUEST).json({
-          error: {
-            credentialsIsInvalid: false,
-            codeOrEmailInvalid: true,
-            emailNotVerified: false,
-            codeExpired: false,
-            message: 'Código inválido.',
-          },
-        });
-      }
-      if (user.codeExpired) {
-        return response.status(HttpStatus.BAD_REQUEST).json({
-          error: {
-            credentialsIsInvalid: false,
-            codeOrEmailInvalid: false,
-            emailNotVerified: false,
-            codeExpired: true,
-            message: 'Um novo código foi enviado para seu email.',
-          },
-        });
-      }
-      if (user.emailNotVerified) {
-        return response.status(HttpStatus.BAD_REQUEST).json({
-          error: {
-            credentialsIsInvalid: false,
-            codeOrEmailInvalid: false,
-            emailNotVerified: true,
-            codeExpired: false,
-            message: 'Por favor, verifique seu email antes de continuar.',
-          },
-        });
+        errorResponse.codeExpired = true;
+        errorResponse.message = 'Um novo código foi enviado para seu email.';
+      } else if (user.credentialsIsInvalid) {
+        errorResponse.credentialsIsInvalid = true;
+        errorResponse.message =
+          'Credenciais inválidas. Verifique o email e a senha.';
+      } else if (user.codeIsInvalid) {
+        errorResponse.codeOrEmailInvalid = true;
+        errorResponse.message = 'Código inválido.';
+      } else if (user.codeExpired) {
+        errorResponse.codeExpired = true;
+        errorResponse.message = 'Um novo código foi enviado para seu email.';
+      } else if (user.emailNotVerified) {
+        errorResponse.emailNotVerified = true;
+        errorResponse.message =
+          'Por favor, verifique seu email antes de continuar.';
+      } else {
+        return response
+          .status(HttpStatus.OK)
+          .json({ data: user.data, token: user.data.access_token });
       }
 
       return response
-        .status(200)
-        .json({ data: user.data, token: user.data.access_token });
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ error: errorResponse });
     } catch (error) {
-      console.error('Erro durante login:', error.message);
-      return response.status(500).json({
-        message: 'Erro interno do servidor. Tente novamente mais tarde.',
-      });
+      this.loggingService.error(
+        `Falha no login para o e-mail ${authUserDto.email}: ${error.message}`,
+      );
+      throw new HttpException(
+        'Login falhou. Por favor, tente novamente.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
   @Post('change-password')
@@ -110,16 +90,25 @@ export class AuthController {
       );
 
       if (result.userNotFound) {
+        this.loggingService.warning(
+          `Falha durante a alteração de senha do e-mail ${authUserDto.email}: usuário não encontrado.`,
+        );
         return response.status(HttpStatus.NOT_FOUND).json({
           message: 'Usuário não encontrado.',
         });
       }
       if (result.codeExpired) {
+        this.loggingService.warning(
+          `Falha durante a alteração de senha do e-mail ${authUserDto.email}: Código expirado. Um novo código foi enviado.`,
+        );
         return response.status(HttpStatus.OK).json({
           message: 'Código expirado, um novo código foi enviado.',
         });
       }
       if (result.invalidCode) {
+        this.loggingService.warning(
+          `Falha durante a alteração de senha do e-mail ${authUserDto.email}: Código inválido.`,
+        );
         return response.status(HttpStatus.OK).json({
           message: 'Código inválido.',
         });
@@ -130,8 +119,18 @@ export class AuthController {
           authUserDto.password,
         );
         if (user) {
+          this.loggingService.info(
+            `Alteração de senha do e-mail ${authUserDto.email} foi bem sucedida`,
+          );
           return response.status(HttpStatus.CREATED).json({
-            message: 'senha alterada com sucesso.',
+            message: 'Senha alterada com sucesso.',
+          });
+        } else {
+          this.loggingService.warning(
+            `Falha durante a alteração de senha do e-mail ${authUserDto.email}: usuário não encontrado.`,
+          );
+          return response.status(HttpStatus.NOT_FOUND).json({
+            message: 'Usuário não encontrado.',
           });
         }
       }
@@ -140,9 +139,11 @@ export class AuthController {
         message: 'Um novo código foi enviado.',
       });
     } catch (error) {
-      console.error(error);
+      this.loggingService.error(
+        `Falha alteração de senha para o e-mail ${authUserDto.email}: ${error.message}`,
+      );
       throw new HttpException(
-        'Erro interno do servidor. Tente novamente mais tarde.',
+        'Falha na alteração de senha. Por favor, tente novamente.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MenuController } from './menu/menu.controller';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { MailerModule } from '@nestjs-modules/mailer';
@@ -45,7 +44,7 @@ dotenv.config();
       serveRoot: '/uploads',
     }),
   ],
-  controllers: [AppController, MenuController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
