@@ -225,4 +225,15 @@ export class EmailService {
       await this.emailRepository.remove(hasEmail);
     }
   }
+  async findOneByEmail(email: string): Promise<EmailEntity | null> {
+    const existingCode = await this.emailRepository.findOne({
+      where: {
+        email,
+      },
+    });
+    if (!existingCode) {
+      return null;
+    }
+    return existingCode;
+  }
 }

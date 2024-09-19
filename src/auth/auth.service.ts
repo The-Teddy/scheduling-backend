@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
-import { UtilityService } from 'src/utility/Utility.service';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +10,6 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-    private readonly utilityService: UtilityService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -31,15 +28,34 @@ export class AuthService {
     if (!user) {
       return { credentialsIsInvalid: true };
     }
+    const thisEmailWasVerified = await this.userService.findOneByEmail(email);
 
+    if (thisEmailWasVerified) {
+      if (!thisEmailWasVerified.emailVerified) {
+        const existingCode = await this.emailService.findOneByEmail(email);
+
+        if (!existingCode) {
+          await this.emailService.sendEmailCode(email, false);
+          return {
+            notFound: true,
+            codeIsInvalid: false,
+            credentialsIsInvalid: false,
+            codeExpired: false,
+            emailNotVerified: false,
+          };
+        }
+      }
+    }
     if (code) {
       user = await this.emailService.verifyEmail(email, parseInt(code));
+
       if (user.invalidCode) {
         return {
           codeIsInvalid: true,
           credentialsIsInvalid: false,
           codeExpired: false,
           emailNotVerified: false,
+          NotFound: false,
         };
       } else if (user.codeExpired) {
         return {
@@ -47,6 +63,7 @@ export class AuthService {
           codeIsInvalid: false,
           credentialsIsInvalid: false,
           emailNotVerified: false,
+          notFound: false,
         };
       }
     }
@@ -57,6 +74,7 @@ export class AuthService {
         codeIsInvalid: false,
         credentialsIsInvalid: false,
         emailNotVerified: true,
+        notFound: false,
       };
     }
 
@@ -85,6 +103,7 @@ export class AuthService {
       codeIsInvalid: false,
       codeExpired: false,
       credentialsIsInvalid: false,
+      notFound: false,
     };
   }
 }

@@ -5,15 +5,12 @@ import {
   HttpException,
   HttpStatus,
   Post,
-  Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 
 import { AuthService } from './auth.service';
 import { AuthUserDto } from './auth.user.dto';
-import { JwtAuthGuard } from './strategies/jwt-auth.guard';
 import { EmailService } from 'src/email/email.service';
 
 @Controller('auth')
@@ -35,42 +32,57 @@ export class AuthController {
         authUserDto.password,
         authUserDto.codeEmail,
       );
+      if (user.notFound) {
+        return response.status(HttpStatus.BAD_REQUEST).json({
+          error: {
+            codeExpired: true,
+            credentialsIsInvalid: false,
+            emailNotVerified: false,
+            codeOrEmailInvalid: false,
+            message: 'Um novo código foi enviado para seu email.',
+          },
+        });
+      }
       if (user.credentialsIsInvalid) {
-        return response.status(401).json({
+        return response.status(HttpStatus.BAD_REQUEST).json({
           error: {
             credentialsIsInvalid: true,
             emailNotVerified: false,
             codeOrEmailInvalid: false,
+            codeExpired: false,
             message: 'Credenciais inválidas. Verifique o email e a senha.',
           },
         });
       }
       if (user.codeIsInvalid) {
-        return response.status(401).json({
+        return response.status(HttpStatus.BAD_REQUEST).json({
           error: {
             credentialsIsInvalid: false,
             codeOrEmailInvalid: true,
             emailNotVerified: false,
+            codeExpired: false,
             message: 'Código inválido.',
           },
         });
       }
       if (user.codeExpired) {
-        return response.status(401).json({
+        return response.status(HttpStatus.BAD_REQUEST).json({
           error: {
             credentialsIsInvalid: false,
-            codeOrEmailInvalid: true,
+            codeOrEmailInvalid: false,
             emailNotVerified: false,
-            message: 'Um novo código foi enviado para o seu email.',
+            codeExpired: true,
+            message: 'Um novo código foi enviado para seu email.',
           },
         });
       }
       if (user.emailNotVerified) {
-        return response.status(401).json({
+        return response.status(HttpStatus.BAD_REQUEST).json({
           error: {
             credentialsIsInvalid: false,
             codeOrEmailInvalid: false,
             emailNotVerified: true,
+            codeExpired: false,
             message: 'Por favor, verifique seu email antes de continuar.',
           },
         });
