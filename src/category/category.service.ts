@@ -6,6 +6,7 @@ import { UtilityService } from 'src/utility/Utility.service';
 import { CategoryInterface } from './category.interface';
 import { updateCategoryResponseInterface } from 'src/interfaces/interfaces';
 import { LoggingService } from 'src/logging/logging.service';
+import { Like } from 'typeorm';
 
 @Injectable()
 export class CategoryService {
@@ -20,11 +21,36 @@ export class CategoryService {
     page: number,
     limit: number,
     id: Buffer,
+    role: string,
+    category: string,
   ): Promise<any> {
+    let orderBy = {};
+
+    //caso o usuário seja admin, irá listar os mais recentes, se não, irá listar em ordem alfabética
+    if (role === 'admin' || role === 'super-admin') {
+      orderBy = {
+        createdAt: 'DESC',
+      };
+    } else {
+      orderBy = {
+        name: 'ASC',
+      };
+    }
+
+    if (typeof category !== 'string' || category.length < 0) {
+      category = '';
+    }
+
     const [result, total] = await this.categoryRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
-      order: { createdAt: 'DESC' }, // Ordenar pelos campos de sua escolha
+      order: orderBy,
+      select: ['name', 'description'],
+      where: {
+        isActive: true,
+        approvalStatus: 'aprovado',
+        name: Like(`%${category}%`),
+      },
     });
 
     this.loggingService.info(

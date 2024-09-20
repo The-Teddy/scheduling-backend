@@ -68,15 +68,18 @@ export class CategoryController {
     @Res() response: Response,
     @Query('page') page: number = 1, // Página padrão: 1
     @Query('limit') limit: number = 10, //
+    @Query('filterByTitle') category: string,
   ): Promise<any> {
     try {
-      const { id }: any = request.user;
+      const { id, role }: any = request.user;
       const uuidBuffer = Buffer.from(id.data);
 
       const categories = await this.categoryService.getAllCategories(
         page,
         limit,
         uuidBuffer,
+        role,
+        category,
       );
 
       return response.status(200).json({ data: categories });
