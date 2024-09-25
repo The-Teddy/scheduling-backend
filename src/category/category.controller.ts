@@ -68,7 +68,7 @@ export class CategoryController {
     @Res() response: Response,
     @Query('page') page: number = 1, // Página padrão: 1
     @Query('limit') limit: number = 10, //
-    @Query('filterByTitle') category: string,
+    @Query('searchTerm') searchTerm: string,
   ): Promise<any> {
     try {
       const { id, role }: any = request.user;
@@ -79,7 +79,7 @@ export class CategoryController {
         limit,
         uuidBuffer,
         role,
-        category,
+        searchTerm,
       );
 
       return response.status(200).json({ data: categories });

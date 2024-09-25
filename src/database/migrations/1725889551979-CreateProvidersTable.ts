@@ -24,9 +24,18 @@ export class CreateProvidersTable1725889551979 implements MigrationInterface {
             length: '100',
           },
           {
+            name: 'about',
+            type: 'text',
+          },
+          {
             name: 'category',
             type: 'varchar',
             length: '50',
+          },
+          {
+            name: 'url',
+            type: 'varchar',
+            length: '30',
           },
           {
             name: 'rating',

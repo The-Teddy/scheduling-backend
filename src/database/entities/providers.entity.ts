@@ -26,8 +26,14 @@ export class ProviderEntity {
   @Column({ type: 'varchar', length: 100 })
   businessName: string;
 
+  @Column({ type: 'text' })
+  about: string;
+
   @Column({ type: 'varchar', length: 50 })
   category: string;
+
+  @Column({ type: 'varchar', length: 30 })
+  url: string;
 
   @Column('float', { default: 0 })
   rating: number;
