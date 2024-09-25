@@ -44,6 +44,9 @@ export class ProviderEntity {
   @Column({ nullable: true })
   cover: string;
 
+  @Column({ type: 'boolean', default: false })
+  hasAutomaticUpdate: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

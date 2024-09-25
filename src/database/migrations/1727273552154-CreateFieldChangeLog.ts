@@ -1,63 +1,68 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class CreateProvidersTable1725889551979 implements MigrationInterface {
+export class CreateFieldChangeLog1727273552154 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'providers',
+        name: 'field_change_log',
         columns: [
           {
             name: 'id',
-            type: 'binary',
-            length: '16',
+            type: 'int',
             isPrimary: true,
+            isGenerated: true,
+            generationStrategy: 'increment',
           },
           {
-            name: 'userId',
+            name: 'providerId',
             type: 'binary',
             length: '16',
             isUnique: true,
           },
           {
-            name: 'businessName',
+            name: 'fieldName',
             type: 'varchar',
-            length: '100',
+            length: '255',
           },
           {
-            name: 'about',
+            name: 'previousValue',
+            type: 'text',
+            isNullable: true,
+          },
+          {
+            name: 'newValue',
             type: 'text',
           },
           {
-            name: 'category',
-            type: 'varchar',
-            length: '50',
-          },
-          {
-            name: 'url',
-            type: 'varchar',
-            length: '30',
-          },
-          {
-            name: 'rating',
-            type: 'float',
-            default: 0,
-          },
-          {
-            name: 'logo',
-            type: 'varchar',
-            length: '255',
-            isNullable: true,
-          },
-          {
-            name: 'cover',
-            type: 'varchar',
-            length: '255',
-            isNullable: true,
-          },
-          {
-            name: 'hasAutomaticUpdate',
+            name: 'automaticUpdate',
             type: 'boolean',
             default: false,
+          },
+          {
+            name: 'userJustification',
+            type: 'text',
+          },
+          {
+            name: 'analizedBy',
+            type: 'binary',
+            length: '16',
+            isNullable: true,
+          },
+          {
+            name: 'analizedByName',
+            type: 'varchar',
+            length: '100',
+            isNullable: true,
+          },
+          {
+            name: 'adminJustification',
+            type: 'text',
+          },
+          {
+            name: 'status',
+            type: 'enum',
+            enum: ['pendente', 'aprovado', 'rejeitado'],
+            default: `'pendente'`,
           },
           {
             name: 'createdAt',
@@ -71,19 +76,11 @@ export class CreateProvidersTable1725889551979 implements MigrationInterface {
             onUpdate: 'CURRENT_TIMESTAMP',
           },
         ],
-        foreignKeys: [
-          {
-            columnNames: ['userId'],
-            referencedColumnNames: ['id'],
-            referencedTableName: 'users',
-            onDelete: 'CASCADE',
-          },
-        ],
       }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('providers');
+    await queryRunner.dropTable('field_change_log');
   }
 }

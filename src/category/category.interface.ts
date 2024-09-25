@@ -7,11 +7,7 @@ export interface CategoryInterface {
   isSuggested: boolean;
   analizedByName: string;
   createdByName: string;
-  approvalStatus:
-    | 'pendente'
-    | 'aprovado'
-    | 'rejeitado'
-    | 'aprovado com modificação';
+  approvalStatus: 'pendente' | 'aprovado' | 'rejeitado';
   createdAt: Date;
   updatedAt: Date;
 }
