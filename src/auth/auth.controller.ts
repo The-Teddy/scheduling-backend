@@ -34,6 +34,7 @@ export class AuthController {
         authUserDto.password,
         authUserDto.codeEmail,
       );
+
       const errorResponse = {
         credentialsIsInvalid: false,
         codeOrEmailInvalid: false,

@@ -66,11 +66,14 @@ export class CategoryController {
   async index(
     @Req() request: Request,
     @Res() response: Response,
-    @Query('page') page: number = 1, // Página padrão: 1
-    @Query('limit') limit: number = 10, //
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
     @Query('searchTerm') searchTerm: string,
   ): Promise<any> {
     try {
+      // const ip =
+      //   request.headers['x-forwarded-for'] || request.socket.remoteAddress;
+
       const { id, role }: any = request.user;
       const uuidBuffer = Buffer.from(id.data);
 

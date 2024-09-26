@@ -69,6 +69,10 @@ export class UserService {
 
   async findOneByEmail(email: string): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      return null;
+    }
     this.loggingService.info(
       `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} listado em ${new Date().toISOString()}`,
     );
