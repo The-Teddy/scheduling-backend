@@ -15,3 +15,23 @@ export interface updateCategoryResponseInterface {
   category: CategoryEntity | null;
   notAuthorized: boolean;
 }
+
+export interface ProviderInterface {
+  name: string;
+  about: string;
+  category: string;
+  url: string;
+  rating: number;
+  logo: string;
+  cover: string;
+  hasAutomaticUpdate: boolean;
+}
+export interface UserInterface {
+  name: string;
+  email: string;
+  role: string;
+  emailVerified: boolean;
+  createdAt: Date;
+  isActive: boolean;
+  business: ProviderInterface;
+}

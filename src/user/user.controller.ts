@@ -73,7 +73,7 @@ export class UserController {
         .status(HttpStatus.UNAUTHORIZED)
         .json({ message: 'Usuário não autenticado.' });
     }
-    const uuidBuffer = Buffer.from(id.data);
+    const uuidBuffer = this.utilityService.uuidBuffer(id);
 
     try {
       const foundUser = await this.userService.findOneById(uuidBuffer);
@@ -87,14 +87,7 @@ export class UserController {
       }
 
       return response.status(200).json({
-        data: {
-          name: foundUser.name,
-          email: foundUser.email,
-          role: foundUser.role,
-          emailVerified: foundUser.emailVerified,
-          isActive: foundUser.isActive,
-          createdAt: foundUser.createdAt,
-        },
+        data: foundUser,
       });
     } catch (error) {
       this.loggingService.error(

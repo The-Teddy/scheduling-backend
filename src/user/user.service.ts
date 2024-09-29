@@ -6,6 +6,7 @@ import { hashSync as encrypt } from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
 import { LoggingService } from 'src/logging/logging.service';
 import { UtilityService } from 'src/utility/Utility.service';
+import { UserInterface } from 'src/interfaces/interfaces';
 
 @Injectable()
 export class UserService {
@@ -76,12 +77,42 @@ export class UserService {
     );
     return user;
   }
-  async findOneById(id: Buffer): Promise<UserEntity | null> {
-    const user = await this.userRepository.findOne({ where: { id } });
+  async findOneById(id: Buffer): Promise<UserInterface | null> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['provider'],
+    });
+    if (!user) {
+      this.loggingService.warning(
+        `Tentativa de listar um usuário com o ID ${this.utilityService.bufferToUuid(id)} que não existe.`,
+      );
+      return null;
+    }
+
+    const data = {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      business: user.provider
+        ? {
+            name: user.provider?.businessName,
+            about: user.provider?.about,
+            category: user.provider?.category,
+            url: user.provider?.url,
+            rating: user.provider?.rating,
+            logo: user.provider?.logo,
+            cover: user.provider?.cover,
+            hasAutomaticUpdate: user.provider?.hasAutomaticUpdate,
+          }
+        : null,
+    };
     this.loggingService.info(
-      `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} listado em ${new Date().toISOString()}`,
+      `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} listado`,
     );
-    return user;
+    return data;
   }
   async verifyEmailUser(email: string): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({
