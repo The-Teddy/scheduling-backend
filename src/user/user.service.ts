@@ -3,7 +3,6 @@ import { Repository } from 'typeorm';
 import { UserEntity } from '../database/entities/user.entity';
 import { CreateUserDto } from './create.user.dto';
 import { hashSync as encrypt } from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from 'src/email/email.service';
 import { LoggingService } from 'src/logging/logging.service';
 import { UtilityService } from 'src/utility/Utility.service';
@@ -49,11 +48,10 @@ export class UserService {
     if (hasEmail) {
       return null;
     }
-    let id = uuidv4();
 
     const encryptedPassword = encrypt(password, 15);
 
-    const binaryUUID = Buffer.from(id.replace(/-/g, ''), 'hex');
+    const binaryUUID = this.utilityService.generateUuidAndTransformInBuffer();
 
     const userData = this.userRepository.create({
       id: binaryUUID,

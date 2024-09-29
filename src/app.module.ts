@@ -11,6 +11,7 @@ import * as dotenv from 'dotenv';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { CategoryModule } from './category/category.module';
+import { ProviderModule } from './provider/provider.module';
 dotenv.config();
 
 @Module({
@@ -43,6 +44,7 @@ dotenv.config();
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
+    ProviderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

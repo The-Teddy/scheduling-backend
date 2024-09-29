@@ -26,6 +26,7 @@ export class CreateProvidersTable1725889551979 implements MigrationInterface {
           {
             name: 'about',
             type: 'text',
+            isNullable: true,
           },
           {
             name: 'category',

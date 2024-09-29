@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UtilityService {
@@ -23,5 +24,15 @@ export class UtilityService {
       hex.substring(16, 20),
       hex.substring(20),
     ].join('-');
+  }
+  generateUuidAndTransformInBuffer(): Buffer {
+    let id = uuidv4();
+
+    const binaryUUID = Buffer.from(id.replace(/-/g, ''), 'hex');
+
+    return binaryUUID;
+  }
+  uuidBuffer(id: any): Buffer {
+    return Buffer.from(id.data);
   }
 }
