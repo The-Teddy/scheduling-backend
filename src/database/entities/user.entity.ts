@@ -25,8 +25,8 @@ export class UserEntity {
   @Column({ default: 'user' })
   role: string;
 
-  @Column({ type: 'varchar', length: 14, nullable: true })
-  document: string;
+  @Column({ type: 'date', nullable: true })
+  birthDate: Date;
 
   @Column({ default: true })
   isActive: boolean;

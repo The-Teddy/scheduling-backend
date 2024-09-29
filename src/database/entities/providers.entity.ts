@@ -26,6 +26,9 @@ export class ProviderEntity {
   @Column({ type: 'varchar', length: 100 })
   businessName: string;
 
+  @Column({ type: 'varchar', length: 18, nullable: true })
+  document: string;
+
   @Column({ type: 'text', nullable: true })
   about: string;
 

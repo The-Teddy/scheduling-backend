@@ -41,6 +41,7 @@ export class ProviderController {
         .json({ message: 'Usuário não autenticado.' });
     }
     const uuidBuffer = this.utilityService.uuidBuffer(id);
+
     try {
       const createdProvider = await this.providerService.create(
         uuidBuffer,

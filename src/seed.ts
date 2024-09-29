@@ -64,6 +64,7 @@ const createUsers = async () => {
       password: encrypt('marcio123', 15),
       isActive: true,
       emailVerified: true,
+      birthDate: new Date('1999-05-24'),
     });
     const admin = userRepository.create({
       id: Buffer.from(uuidv4().replace(/-/g, ''), 'hex'),
@@ -73,6 +74,7 @@ const createUsers = async () => {
       password: encrypt('marcio123', 15),
       isActive: true,
       emailVerified: true,
+      birthDate: new Date('1999-05-24'),
     });
     const support = userRepository.create({
       id: Buffer.from(uuidv4().replace(/-/g, ''), 'hex'),
@@ -82,6 +84,7 @@ const createUsers = async () => {
       password: encrypt('marcio123', 15),
       isActive: true,
       emailVerified: true,
+      birthDate: new Date('1999-05-24'),
     });
 
     let hasSuperAdmin = await userRepository.findOne({

@@ -110,8 +110,16 @@ export class UserService {
         : null,
     };
     this.loggingService.info(
-      `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} listado`,
+      `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} listado` +
+        (user.provider
+          ? `, com o negócio ${user.provider.businessName} de id ${this.utilityService.bufferToUuid(user.provider.id)}`
+          : ', ainda não possui uma empresa cadastrada'),
     );
+    if (!user.provider) {
+      this.loggingService.info(
+        `Usuário ${user.name} de id ${this.utilityService.bufferToUuid(user.id)} ainda não criou uma empresa.`,
+      );
+    }
     return data;
   }
   async verifyEmailUser(email: string): Promise<UserEntity | null> {

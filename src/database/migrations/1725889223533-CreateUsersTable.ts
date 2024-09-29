@@ -35,9 +35,8 @@ export class CreateUsersTable1725889223533 implements MigrationInterface {
             default: "'user'",
           },
           {
-            name: 'document',
-            type: 'varchar',
-            length: '14',
+            name: 'birthDate',
+            type: 'date',
             isNullable: true,
           },
           {
