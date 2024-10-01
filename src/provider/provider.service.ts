@@ -18,7 +18,7 @@ export class ProviderService {
     name: string,
     provider: CreateProviderDTO,
   ): Promise<ProviderEntity | null> {
-    const { url, businessName, category } = provider;
+    const { url, businessName, category, document } = provider;
 
     const hasProvider = await this.providerRepository.findOne({
       where: {
@@ -38,6 +38,7 @@ export class ProviderService {
       id: binaryUUID,
       userId,
       businessName,
+      document,
       category,
       url,
     });
