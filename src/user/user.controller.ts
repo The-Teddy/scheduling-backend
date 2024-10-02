@@ -9,10 +9,11 @@ import {
   Res,
   Req,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { UserService } from './user.service';
-import { CreateUserDto } from './create.user.dto';
+import { CreateUserDTO, UpdateDataUserDTO } from './user.dto';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
 import { LoggingService } from 'src/logging/logging.service';
 import { UtilityService } from 'src/utility/Utility.service';
@@ -28,7 +29,7 @@ export class UserController {
 
   @Post('create')
   async create(
-    @Body() createUserDto: CreateUserDto,
+    @Body() createUserDto: CreateUserDTO,
     @Res() response: Response,
   ): Promise<any> {
     try {
@@ -91,11 +92,49 @@ export class UserController {
       });
     } catch (error) {
       this.loggingService.error(
-        `Falha ao listar usuário de id ${uuidBuffer} em ${new Date().toISOString()}: ${error.message}`,
+        `Falha ao listar usuário de id ${uuidBuffer}: ${error.message}`,
       );
 
       throw new HttpException(
         `Falha ao listar usuário. Por favor, tente novamente mais tarde.`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  @Put('/update-data')
+  @UseGuards(JwtAuthGuard)
+  async updateData(
+    @Req() request: Request,
+    @Res() response: Response,
+    @Body() body: UpdateDataUserDTO,
+  ): Promise<any> {
+    const user = request.user;
+    const { id }: any = user;
+
+    if (!user || !id || !id.data) {
+      this.loggingService.warning('Usuário não autenticado ou ID inválido');
+      return response
+        .status(HttpStatus.UNAUTHORIZED)
+        .json({ message: 'Usuário não autenticado.' });
+    }
+    const uuidBuffer = this.utilityService.uuidBuffer(id);
+    try {
+      const updatedUser = await this.userService.updateDataUser(
+        uuidBuffer,
+        body,
+      );
+      if (!updatedUser) {
+        return response.status(HttpStatus.NOT_FOUND).json({
+          message: 'Usuário não encontrado',
+        });
+      }
+      return response.sendStatus(HttpStatus.OK);
+    } catch (error) {
+      this.loggingService.error(
+        `Falha ao atualizar dados do usuário de id ${uuidBuffer}: ${error.message}`,
+      );
+      throw new HttpException(
+        `Falha ao atualizar dados. Por favor, tente novamente mais tarde.`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

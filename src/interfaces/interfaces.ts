@@ -30,6 +30,7 @@ export interface UserInterface {
   name: string;
   email: string;
   role: string;
+  birthDate: Date;
   emailVerified: boolean;
   createdAt: Date;
   isActive: boolean;

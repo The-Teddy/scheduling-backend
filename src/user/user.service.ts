@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../database/entities/user.entity';
-import { CreateUserDto } from './create.user.dto';
+import { CreateUserDTO, UpdateDataUserDTO } from './user.dto';
 import { hashSync as encrypt } from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
 import { LoggingService } from 'src/logging/logging.service';
@@ -42,7 +42,7 @@ export class UserService {
 
     return users;
   }
-  async create(user: CreateUserDto): Promise<UserEntity | null> {
+  async create(user: CreateUserDTO): Promise<UserEntity | null> {
     const { name, email, password } = user;
     const hasEmail = await this.userRepository.findOne({ where: { email } });
 
@@ -84,7 +84,7 @@ export class UserService {
     });
     if (!user) {
       this.loggingService.warning(
-        `Tentativa de listar um usuário com o ID ${this.utilityService.bufferToUuid(id)} que não existe.`,
+        `Falha ao listar usuário com o ID ${this.utilityService.bufferToUuid(id)}: Usuário não encontrado.`,
       );
       return null;
     }
@@ -93,6 +93,7 @@ export class UserService {
       name: user.name,
       email: user.email,
       role: user.role,
+      birthDate: user.birthDate,
       emailVerified: user.emailVerified,
       isActive: user.isActive,
       createdAt: user.createdAt,
@@ -169,5 +170,30 @@ export class UserService {
       // user.cover = coverPath;
     }
     return await this.userRepository.save(user);
+  }
+  async updateDataUser(
+    id: Buffer,
+    data: UpdateDataUserDTO,
+  ): Promise<UserEntity | null> {
+    const foundUser = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (!foundUser) {
+      this.loggingService.warning(
+        `Falha ao listar usuário com o ID ${this.utilityService.bufferToUuid(id)}: Usuário não encontrado.`,
+      );
+      return null;
+    }
+
+    foundUser.name = data.name;
+    foundUser.birthDate = data.birthDate;
+    const updatedUser = await this.userRepository.save(foundUser);
+    this.loggingService.info(
+      `Usuário com ID ${id} (${foundUser.name}) alterou o nome de ${foundUser.name} para ${data.name} e a data de nascimento de ${foundUser.birthDate} para ${data.birthDate}.`,
+    );
+
+    return updatedUser;
   }
 }

@@ -1,7 +1,13 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString } from 'class-validator';
+import {
+  IsDate,
+  IsDateString,
+  IsEmail,
+  IsString,
+  Length,
+} from 'class-validator';
 
-export class CreateUserDto {
+export class CreateUserDTO {
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   readonly name: string;
@@ -13,4 +19,12 @@ export class CreateUserDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   readonly password: string;
+}
+export class UpdateDataUserDTO {
+  @IsString()
+  @Length(3, 100)
+  name: string;
+
+  @IsDateString()
+  birthDate: Date;
 }
