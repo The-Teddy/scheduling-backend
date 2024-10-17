@@ -1,5 +1,5 @@
 import { UtilityService } from 'src/utility/Utility.service';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -9,6 +9,7 @@ import { LoggingService } from 'src/logging/logging.service';
 @Injectable()
 export class AuthService {
   constructor(
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
@@ -26,12 +27,12 @@ export class AuthService {
         return result;
       } else {
         this.loggingService.warning(
-          `Tentativa de login com o e-mail ${email} falhou: senha incorreta.`,
+          `Validação de credendicias com o e-mail ${email} falhou: senha incorreta.`,
         );
       }
     } else {
       this.loggingService.warning(
-        `Tentativa de login com o e-mail ${email} falhou: usuário não encontrado.`,
+        `Validação de credendicias com o e-mail ${email} falhou: usuário não encontrado.`,
       );
     }
     return null;
@@ -50,7 +51,7 @@ export class AuthService {
         const existingCode = await this.emailService.findOneByEmail(email);
 
         if (!existingCode) {
-          await this.emailService.sendEmailCode(email, false);
+          await this.emailService.sendEmailCode(email, 'CONFIRM_EMAIL');
           this.loggingService.warning(
             `Código de verificação para o email ${email} não encontrado. Um novo código será enviado.`,
           );
@@ -66,7 +67,11 @@ export class AuthService {
       }
     }
     if (code) {
-      user = await this.emailService.verifyEmail(email, parseInt(code));
+      user = await this.emailService.verifyEmail(
+        email,
+        parseInt(code),
+        'CONFIRM_EMAIL',
+      );
 
       if (user.invalidCode) {
         this.loggingService.warning(

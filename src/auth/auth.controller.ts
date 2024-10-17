@@ -88,6 +88,7 @@ export class AuthController {
       const result = await this.emailService.verifyAndSendEmailCode(
         authUserDto.email,
         authUserDto.codeEmail,
+        'CHANGE_PASSWORD',
       );
 
       if (result.userNotFound) {

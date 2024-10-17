@@ -13,7 +13,11 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { UserService } from './user.service';
-import { CreateUserDTO, UpdateDataUserDTO } from './user.dto';
+import {
+  CreateUserDTO,
+  UpdateDataUserDTO,
+  UpdateEmailUserDTO,
+} from './user.dto';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
 import { LoggingService } from 'src/logging/logging.service';
 import { UtilityService } from 'src/utility/Utility.service';
@@ -43,7 +47,10 @@ export class UserController {
           .json({ message: 'Este email já esta sendo utilizado.' });
       }
 
-      await this.emailService.sendEmailCode(createUserDto.email, false);
+      await this.emailService.sendEmailCode(
+        createUserDto.email,
+        'CONFIRM_EMAIL',
+      );
       this.loggingService.warning(
         `Usuário ${createUserDto.name} criado com sucesso em ${new Date().toISOString()}: um código de verificação foi enviado para o e-mail ${createUserDto.email} `,
       );
@@ -135,6 +142,115 @@ export class UserController {
       );
       throw new HttpException(
         `Falha ao atualizar dados. Por favor, tente novamente mais tarde.`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  @Put('/change-email')
+  @UseGuards(JwtAuthGuard)
+  async updateEmail(
+    @Req() request: Request,
+    @Res() response: Response,
+    @Body() body: UpdateEmailUserDTO,
+  ): Promise<any> {
+    const user = request.user;
+    const { id, email }: any = user;
+
+    if (!user || !id || !id.data) {
+      this.loggingService.warning('Usuário não autenticado ou ID inválido');
+      return response
+        .status(HttpStatus.UNAUTHORIZED)
+        .json({ message: 'Usuário não autenticado.' });
+    }
+    const uuidBuffer = this.utilityService.uuidBuffer(id);
+    try {
+      if (email === body.email) {
+        return response.status(HttpStatus.CONFLICT).json({
+          message: 'O email fornecido deve ser diferente do atual',
+        });
+      }
+      const codeValidate = await this.emailService.verifyAndSendEmailCode(
+        email,
+        body.codeEmail,
+        'CHANGE_EMAIL',
+        body.email,
+      );
+      if (codeValidate.differentEmail) {
+        this.loggingService.warning(
+          `Falha durante a alteração do e-mail ${email}: O e-mail fornecido é diferente do e-mail de verificação.`,
+        );
+        return response.status(HttpStatus.BAD_REQUEST).json({
+          message: 'O e-mail fornecido é diferente do e-mail de verificação.',
+        });
+      }
+      if (codeValidate.userNotFound) {
+        this.loggingService.warning(
+          `Falha durante a alteração do e-mail ${email}: usuário não encontrado.`,
+        );
+        return response.status(HttpStatus.NOT_FOUND).json({
+          message: 'Usuário não encontrado.',
+        });
+      }
+      if (codeValidate.codeExpired) {
+        this.loggingService.warning(
+          `Falha durante a alteração do e-mail ${email}: Código expirado. Um novo código foi enviado.`,
+        );
+        return response.status(HttpStatus.OK).json({
+          message: 'Código expirado, um novo código foi enviado.',
+        });
+      }
+      if (codeValidate.invalidCode) {
+        this.loggingService.warning(
+          `Falha durante a alteração do e-mail ${email}: Código inválido.`,
+        );
+        return response.status(HttpStatus.BAD_REQUEST).json({
+          message: 'Código inválido.',
+        });
+      }
+      if (codeValidate.hasCode) {
+        const updatedUser: any = await this.userService.updateEmailUser(
+          uuidBuffer,
+          body,
+        );
+
+        if (updatedUser.userNotFound) {
+          return response.status(HttpStatus.NOT_FOUND).json({
+            message: 'Usuário não encontrado',
+          });
+        }
+        if (updatedUser.outTime) {
+          const formatedTime: any = this.utilityService.formatTimeOrDays(
+            updatedUser.remainingTime,
+          );
+          const messageRemainingTime = this.utilityService.formatTimeInText(
+            'Você poderá alterar seu e-mail novamente em',
+            formatedTime,
+          );
+
+          return response.status(HttpStatus.ACCEPTED).json({
+            message: messageRemainingTime,
+          });
+        }
+        if (updatedUser.credentialsIsInvalid) {
+          return response.status(HttpStatus.UNAUTHORIZED).json({
+            message: 'Senha inválida',
+          });
+        }
+        this.emailService.deleteCodeEmail(email, true);
+        return response.status(HttpStatus.CREATED).json({
+          message:
+            'Email alterado com sucesso!! Faça o login novamente para continuar.',
+        });
+      }
+      return response.status(HttpStatus.OK).json({
+        message: 'Um novo código foi enviado.',
+      });
+    } catch (error) {
+      this.loggingService.error(
+        `Falha ao atualizar E-mail do usuário de id ${uuidBuffer}: ${error.message}`,
+      );
+      throw new HttpException(
+        `Falha ao atualizar E-mail. Por favor, tente novamente mais tarde.`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -6,6 +6,7 @@ import { UserModule } from 'src/user/user.module';
 import { UtilityModule } from 'src/utility/Utility.module';
 import { EmailController } from './email.controller';
 import { LoggingModule } from 'src/logging/logging.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { LoggingModule } from 'src/logging/logging.module';
     forwardRef(() => UserModule),
     UtilityModule,
     LoggingModule,
+    JwtModule,
   ],
   providers: [...emailProviders, EmailService],
   exports: [EmailService],

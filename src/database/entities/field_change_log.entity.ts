@@ -7,12 +7,12 @@ import {
 } from 'typeorm';
 
 @Entity('field_change_log')
-export class FieldChangeLog {
+export class FieldChangeLogEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'binary', length: 16, unique: true })
-  providerId: Buffer;
+  @Column({ type: 'binary', length: 16 })
+  providerOrUserId: Buffer;
 
   @Column({ type: 'varchar', length: 255 })
   fieldName: string;
@@ -26,7 +26,10 @@ export class FieldChangeLog {
   @Column({ type: 'boolean', default: false })
   automaticUpdate: boolean;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'boolean', default: true })
+  isProviderId: boolean;
+
+  @Column({ type: 'text', nullable: true })
   userJustification: string;
 
   @Column({ type: 'binary', length: 16, nullable: true })
@@ -35,7 +38,7 @@ export class FieldChangeLog {
   @Column({ type: 'varchar', length: 100, nullable: true })
   analizedByName: string | null;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   adminJustification: string;
 
   @Column({

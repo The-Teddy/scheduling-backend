@@ -12,6 +12,8 @@ export class EmailEntity {
   id: number;
   @Column({ length: 200 })
   email: string;
+  @Column({ length: 200, nullable: true })
+  oldEmail: string;
   @Column()
   code: number;
   @CreateDateColumn()

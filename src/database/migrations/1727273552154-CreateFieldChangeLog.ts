@@ -14,10 +14,9 @@ export class CreateFieldChangeLog1727273552154 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           {
-            name: 'providerId',
+            name: 'providerOrUserId',
             type: 'binary',
             length: '16',
-            isUnique: true,
           },
           {
             name: 'fieldName',
@@ -39,8 +38,14 @@ export class CreateFieldChangeLog1727273552154 implements MigrationInterface {
             default: false,
           },
           {
+            name: 'isProviderId',
+            type: 'boolean',
+            default: true,
+          },
+          {
             name: 'userJustification',
             type: 'text',
+            isNullable: true,
           },
           {
             name: 'analizedBy',
@@ -57,6 +62,7 @@ export class CreateFieldChangeLog1727273552154 implements MigrationInterface {
           {
             name: 'adminJustification',
             type: 'text',
+            isNullable: true,
           },
           {
             name: 'status',

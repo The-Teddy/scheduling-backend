@@ -20,6 +20,12 @@ export class CreateEmailCodesTable1725889223533 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'oldEmail',
+            type: 'varchar',
+            length: '200',
+            isNullable: true,
+          },
+          {
             name: 'code',
             type: 'int',
             isNullable: false,

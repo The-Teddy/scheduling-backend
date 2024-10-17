@@ -3,28 +3,45 @@ import {
   IsDate,
   IsDateString,
   IsEmail,
+  IsOptional,
   IsString,
   Length,
 } from 'class-validator';
+import { IsSixDigitCode } from 'src/validators/IsSixDigitCode';
 
 export class CreateUserDTO {
-  @IsString()
+  @IsString({ message: 'O nome deve ser uma string entre 3 e 100 caracteres' })
+  @Length(3, 100)
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   readonly name: string;
 
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsEmail()
+  @IsEmail({}, { message: 'O e-mail fornecido não é válido.' })
   readonly email: string;
 
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @IsString()
+  @IsString({ message: 'A senha deve ser uma string' })
   readonly password: string;
 }
 export class UpdateDataUserDTO {
-  @IsString()
+  @IsString({ message: 'O nome deve ser uma string entre 3 e 100 caracteres' })
   @Length(3, 100)
   name: string;
 
-  @IsDateString()
+  @IsDateString(
+    {},
+    { message: 'A data de nascimento deve seguir o padrão ISO: YYYY-MM-DD' },
+  )
   birthDate: Date;
+}
+export class UpdateEmailUserDTO {
+  @IsEmail()
+  readonly email: string;
+  @IsString()
+  readonly password: string;
+  @IsOptional()
+  @IsSixDigitCode({
+    message: 'O código deve ter exatamente 6 dígitos numéricos.',
+  })
+  readonly codeEmail?: string | null;
 }

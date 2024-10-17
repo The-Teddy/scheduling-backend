@@ -10,6 +10,7 @@ import {
   VerifyAndSendEmailCodeInterface,
 } from 'src/interfaces/interfaces';
 import { LoggingService } from 'src/logging/logging.service';
+import { EmailUserDto } from './email.user.dto';
 
 @Injectable()
 export class EmailService {
@@ -26,6 +27,7 @@ export class EmailService {
   async verifyEmail(
     email: string,
     code: number,
+    subject: 'CHANGE_PASSWORD' | 'CHANGE_EMAIL' | 'CONFIRM_EMAIL',
   ): Promise<
     UserEntity | BooleanObject<'codeExpired'> | BooleanObject<'invalidCode'>
   > {
@@ -43,7 +45,7 @@ export class EmailService {
         //caso tenha expirado, remove o código
         await this.emailRepository.remove(codeAndEmail);
         //aqui ela envia outro código
-        await this.sendEmailCode(email, false);
+        await this.sendEmailCode(email, subject);
         return {
           codeExpired: true,
           invalidCode: false,
@@ -57,21 +59,34 @@ export class EmailService {
     return { codeExpired: false, invalidCode: true };
   }
 
-  async sendEmailCode(email: string, forgotPassword: boolean) {
+  async sendEmailCode(
+    email: string,
+    subject: 'CHANGE_PASSWORD' | 'CHANGE_EMAIL' | 'CONFIRM_EMAIL',
+    oldEmail: string | null = null,
+  ) {
     //gera um número aleatório de 6 digitos
     const code = this.utilityService.generateRandomNumbers();
     //cria uma instância da entidade EmailRepository
     const storeCode = this.emailRepository.create({
       email,
+      oldEmail,
       code,
     });
     //salva o email e o código na base de dados
     await this.emailRepository.save(storeCode);
     //envia o email
+
+    const subjectEmail =
+      subject === 'CONFIRM_EMAIL'
+        ? 'Confirmação de E-mail'
+        : subject === 'CHANGE_PASSWORD'
+          ? 'Recuperação de senha'
+          : 'Alteração de Email';
+
     await this.mailerService.sendMail({
       to: email,
       from: process.env.MAIL_FROM,
-      subject: forgotPassword ? 'Recuperação de senha' : 'Confirmação de email',
+      subject: subjectEmail,
       text: code.toString(),
       html: `
       <!DOCTYPE html>
@@ -79,7 +94,7 @@ export class EmailService {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seu Código de ${forgotPassword ? 'Recuperação' : 'Confirmação'}</title>
+    <title>Seu Código de ${subjectEmail}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -138,16 +153,16 @@ export class EmailService {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Seu Código de ${forgotPassword ? 'Recuperação' : 'Confirmação'}</h1>
+            <h1>Seu Código de ${subjectEmail}</h1>
         </div>
         <div class="content">
             <p>Olá,</p>
-            <p>${forgotPassword ? 'Obrigado por utilizar nossa plataforma. Aqui está o seu código de recuperação:' : 'Obrigado por se registrar. Aqui está o seu código de verificação:'}</p>
+            <p>Obrigado por utilizar nosso sistema. Aqui está o seu código de ${subjectEmail}</p>
             <p style="font-size: 24px; font-weight: bold;">${code}</p>
             <p>Se você não solicitou este código, por favor ignore este e-mail.</p>
         </div>
         <div class="footer">
-            <p>&copy; 2024 TeddyDeveloper & JaoDesigner. Todos os direitos reservados.</p>
+            <p>&copy; 2024 TeddyDeveloper. Todos os direitos reservados.</p>
         </div>
     </div>
 </body>
@@ -159,6 +174,8 @@ export class EmailService {
   async verifyAndSendEmailCode(
     email: string,
     code: string | null,
+    subject: 'CHANGE_PASSWORD' | 'CHANGE_EMAIL' | 'CONFIRM_EMAIL',
+    newEmail?: string,
   ): Promise<VerifyAndSendEmailCodeInterface> {
     const user = await this.userService.findOneByEmail(email);
 
@@ -169,13 +186,25 @@ export class EmailService {
         codeExpired: false,
         hasCode: false,
         invalidCode: false,
+        differentEmail: false,
       };
     }
+    const where = subject === 'CHANGE_EMAIL' ? { oldEmail: email } : { email };
     const existingCode = await this.emailRepository.findOne({
-      where: { email },
+      where: where,
     });
+
     //verifica a existência do código pelo email fornecido
     if (existingCode) {
+      if (existingCode.email !== newEmail.toLowerCase()) {
+        return {
+          userNotFound: false,
+          codeExpired: false,
+          hasCode: false,
+          invalidCode: false,
+          differentEmail: true,
+        };
+      }
       //verifica se o usuário passou o código
       if (code) {
         //verifica se o código é o mesmo que está na base de dados
@@ -185,6 +214,7 @@ export class EmailService {
             codeExpired: false,
             hasCode: false,
             invalidCode: true,
+            differentEmail: false,
           };
         }
       }
@@ -192,12 +222,13 @@ export class EmailService {
       if (this.utilityService.hasExpired(existingCode.createdAt)) {
         //caso o código tenha expirado, remove e envia outro
         await this.emailRepository.remove(existingCode);
-        await this.sendEmailCode(email, true);
+        await this.sendEmailCode(email, subject);
         return {
           userNotFound: false,
           codeExpired: true,
           hasCode: false,
           invalidCode: false,
+          differentEmail: false,
         };
       }
 
@@ -206,24 +237,27 @@ export class EmailService {
         codeExpired: false,
         hasCode: true,
         invalidCode: false,
+        differentEmail: false,
       };
     }
     this.loggingService.info(
       `Um novo código de verificação foi enviado para o e-mail ${email}`,
     );
     //um novo código sera enviado caso o email não encotre nenhum código na base de dados
-    await this.sendEmailCode(email, true);
+    await this.sendEmailCode(email, subject);
     return {
       userNotFound: false,
       codeExpired: false,
       hasCode: false,
       invalidCode: false,
+      differentEmail: false,
     };
   }
-  async deleteCodeEmail(email: string) {
+  async deleteCodeEmail(email: string, isOldEmail: boolean = false) {
+    const where = isOldEmail ? { oldEmail: email } : { email };
     //verifica se o email fornecido está na base de dados
     const hasEmail = await this.emailRepository.findOne({
-      where: { email },
+      where: where,
     });
     //caso esteja, remove o email relativo ao código de verificação
     if (hasEmail) {
@@ -240,5 +274,67 @@ export class EmailService {
       return null;
     }
     return existingCode;
+  }
+  async verifyOldEmailAndSendEmailCode(
+    id: Buffer,
+    newEmail: string,
+  ): Promise<VerifyAndSendEmailCodeInterface> {
+    const user = await this.userService.findOneById(id);
+
+    //verifica a existência do usuário na base de dados
+    if (!user) {
+      return {
+        userNotFound: true,
+        codeExpired: false,
+        hasCode: false,
+        invalidCode: false,
+      };
+    }
+    const existingCode = await this.emailRepository.findOne({
+      where: { oldEmail: user.email },
+    });
+    //verifica a existência do código pelo email fornecido
+    if (existingCode) {
+      //verifica se o código expirou
+      if (this.utilityService.hasExpired(existingCode.createdAt)) {
+        //caso o código tenha expirado, remove e envia outro
+        await this.emailRepository.remove(existingCode);
+        await this.sendEmailCode(newEmail, 'CHANGE_EMAIL', user.email);
+        return {
+          userNotFound: false,
+          codeExpired: true,
+          hasCode: false,
+          invalidCode: false,
+        };
+      }
+
+      return {
+        userNotFound: false,
+        codeExpired: false,
+        hasCode: true,
+        invalidCode: false,
+      };
+    }
+
+    //um novo código sera enviado caso o email não encotre nenhum código na base de dados
+    await this.sendEmailCode(newEmail, 'CHANGE_EMAIL', user.email);
+    this.loggingService.info(
+      `Um novo código de verificação foi enviado para o e-mail ${newEmail}`,
+    );
+    return {
+      userNotFound: false,
+      codeExpired: false,
+      hasCode: false,
+      invalidCode: false,
+    };
+  }
+  async sendEmail(email: string, subject: string, text: string, html: string) {
+    await this.mailerService.sendMail({
+      to: email,
+      from: process.env.MAIL_FROM,
+      subject: subject,
+      text: text,
+      html: html,
+    });
   }
 }

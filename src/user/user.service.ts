@@ -1,12 +1,23 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../database/entities/user.entity';
-import { CreateUserDTO, UpdateDataUserDTO } from './user.dto';
+import {
+  CreateUserDTO,
+  UpdateDataUserDTO,
+  UpdateEmailUserDTO,
+} from './user.dto';
 import { hashSync as encrypt } from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
 import { LoggingService } from 'src/logging/logging.service';
 import { UtilityService } from 'src/utility/Utility.service';
-import { UserInterface } from 'src/interfaces/interfaces';
+import {
+  BooleanObject,
+  NumberObject,
+  UserInterface,
+} from 'src/interfaces/interfaces';
+import { FieldchangeLogService } from 'src/field_change_log/field_change_log.service';
+import { AuthService } from 'src/auth/auth.service';
+import { timeToWaitInHours } from 'src/global/globalVariablesAndConstants';
 
 @Injectable()
 export class UserService {
@@ -16,6 +27,9 @@ export class UserService {
     private readonly emailService: EmailService,
     private readonly loggingService: LoggingService,
     private readonly utilityService: UtilityService,
+    private readonly fieldChangeLogService: FieldchangeLogService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
   ) {}
 
   async findAll(
@@ -67,7 +81,9 @@ export class UserService {
   }
 
   async findOneByEmail(email: string): Promise<UserEntity | null> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
 
     if (!user) {
       return null;
@@ -195,5 +211,104 @@ export class UserService {
     );
 
     return updatedUser;
+  }
+
+  async updateEmailUser(
+    id: Buffer,
+    data: UpdateEmailUserDTO,
+  ): Promise<
+    | BooleanObject<'userNotFound'>
+    | BooleanObject<'outTime'>
+    | BooleanObject<'credentialsIsInvalid'>
+    | NumberObject<'remainingTime'>
+  > {
+    const foundUser = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (!foundUser) {
+      this.loggingService.warning(
+        `Falha ao listar usuário com o ID ${this.utilityService.bufferToUuid(id)}: Usuário não encontrado.`,
+      );
+      return {
+        userNotFound: true,
+        outTime: false,
+        credentialsIsInvalid: false,
+      };
+    }
+    const passwordValidate = await this.authService.validateUser(
+      foundUser.email,
+      data.password,
+    );
+    if (!passwordValidate) {
+      return {
+        userNotFound: false,
+        outTime: false,
+        credentialsIsInvalid: true,
+      };
+    }
+
+    const logEmail = await this.fieldChangeLogService.showLog(id, 'email');
+    if (logEmail) {
+      const hasExpired = this.utilityService.hasExpired(
+        logEmail.createdAt,
+        timeToWaitInHours,
+      );
+
+      if (!hasExpired) {
+        const remainingTime = this.utilityService.reimaningTime(
+          logEmail.createdAt,
+          timeToWaitInHours,
+        );
+        return {
+          userNotFound: false,
+          outTime: true,
+          credentialsIsInvalid: false,
+          remainingTime: remainingTime,
+        };
+      }
+    }
+    const oldEmail = foundUser.email;
+    foundUser.email = data.email;
+
+    await this.userRepository.save(foundUser);
+    this.loggingService.info(
+      `Usuário com ID ${id} (${foundUser.name}) alterou o email de ${foundUser.email} para ${data.email}.`,
+    );
+    await this.fieldChangeLogService.createLog(
+      id,
+      'email',
+      foundUser.email,
+      data.email,
+      false,
+    );
+
+    const HTMLContent = `
+      <p>Olá, <strong>${foundUser.name}</strong></p>
+      <p style="text-align: justify;">Gostaríamos de informar que o email associado à sua conta foi alterado com sucesso. A partir de agora, todas as comunicações serão enviadas para o novo endereço de email: ${data.email}.</p>
+      <p style="text-align: justify;">Se você não solicitou essa alteração ou acredita que houve algum erro, por favor, entre em contato com nosso suporte imediatamente para que possamos garantir a segurança da sua conta.</p>
+    `;
+    const textContent = `
+      Olá, ${foundUser.name} \n
+      Gostaríamos de informar que o email associado à sua conta foi alterado com sucesso. A partir de agora, todas as comunicações serão enviadas para o novo endereço de email: ${data.email}.\n
+      Se você não solicitou essa alteração ou acredita que houve algum erro, por favor, entre em contato com nosso suporte imediatamente para que possamos garantir a segurança da sua conta.
+    `;
+    const formatedHTML = await this.utilityService.formatHTML(
+      'Atualização de Email Realizada com Sucesso',
+      HTMLContent,
+    );
+
+    await this.emailService.sendEmail(
+      oldEmail,
+      'Atualização de Email Realizada com Sucesso',
+      textContent,
+      formatedHTML,
+    );
+    return {
+      userNotFound: false,
+      outTime: false,
+      credentialsIsInvalid: false,
+    };
   }
 }
