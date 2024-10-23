@@ -8,6 +8,8 @@ import {
 } from 'src/interfaces/interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { timeToWaitInHours } from 'src/global/globalVariablesAndConstants';
+import * as bcrypt from 'bcrypt';
+import { hashSync as encrypt } from 'bcrypt';
 
 @Injectable()
 export class UtilityService {
@@ -284,5 +286,19 @@ export class UtilityService {
 
     `;
     return html;
+  }
+  async validatePassword(password: string): Promise<boolean> {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
+
+    return regex.test(password);
+  }
+  async checkPassword(
+    stringPassword: string,
+    encryptedPassword: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(stringPassword, encryptedPassword);
+  }
+  async encryptPassword(password: string): Promise<string> {
+    return encrypt(password, 15);
   }
 }

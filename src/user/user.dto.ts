@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
 } from 'class-validator';
 import { IsSixDigitCode } from 'src/validators/IsSixDigitCode';
 
@@ -21,6 +22,10 @@ export class CreateUserDTO {
 
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'A senha deve ser uma string' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/, {
+    message:
+      'A senha deve ter no mínimo 8 caracteres, incluindo 1 letra maiúscula, 1 letra minúscula e 1 caractere especial.',
+  })
   readonly password: string;
 }
 export class UpdateDataUserDTO {
@@ -44,4 +49,21 @@ export class UpdateEmailUserDTO {
     message: 'O código deve ter exatamente 6 dígitos numéricos.',
   })
   readonly codeEmail?: string | null;
+}
+export class UpdatePasswordDTO {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'A senha deve ser uma string' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/, {
+    message:
+      'A senha deve ter no mínimo 8 caracteres, incluindo 1 letra maiúscula, 1 letra minúscula e 1 caractere especial.',
+  })
+  readonly password: string;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'A senha deve ser uma string' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/, {
+    message:
+      'A senha deve ter no mínimo 8 caracteres, incluindo 1 letra maiúscula, 1 letra minúscula e 1 caractere especial.',
+  })
+  readonly newPassword: string;
 }

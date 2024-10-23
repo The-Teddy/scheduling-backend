@@ -17,6 +17,7 @@ import {
   CreateUserDTO,
   UpdateDataUserDTO,
   UpdateEmailUserDTO,
+  UpdatePasswordDTO,
 } from './user.dto';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
 import { LoggingService } from 'src/logging/logging.service';
@@ -251,6 +252,51 @@ export class UserController {
       );
       throw new HttpException(
         `Falha ao atualizar E-mail. Por favor, tente novamente mais tarde.`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  @Put('/change-password')
+  @UseGuards(JwtAuthGuard)
+  async updatePassword(
+    @Req() request: Request,
+    @Res() response: Response,
+    @Body() body: UpdatePasswordDTO,
+  ): Promise<any> {
+    const user = request.user;
+    const { id }: any = user;
+
+    if (!user || !id || !id.data) {
+      this.loggingService.warning('Usuário não autenticado ou ID inválido');
+      return response
+        .status(HttpStatus.UNAUTHORIZED)
+        .json({ message: 'Usuário não autenticado.' });
+    }
+    const uuidBuffer = this.utilityService.uuidBuffer(id);
+    try {
+      const updatedUser: any = await this.userService.updatePassword(
+        uuidBuffer,
+        body,
+      );
+
+      if (updatedUser.userNotFound) {
+        return response.status(HttpStatus.NOT_FOUND).json({
+          message: 'Usuário não encontrado',
+        });
+      }
+      if (updatedUser.credentialsIsInvalid) {
+        return response.status(HttpStatus.UNAUTHORIZED).json({
+          message: 'Credenciais inválidas. Verifique a senha.',
+        });
+      }
+
+      return response.sendStatus(200);
+    } catch (error) {
+      this.loggingService.error(
+        `Falha ao atualizar Senha do usuário de id ${uuidBuffer}: ${error.message}`,
+      );
+      throw new HttpException(
+        'Falha ao atualizar senha. Por favor, tente novamente mais tarde.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

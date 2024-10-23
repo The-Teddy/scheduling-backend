@@ -2,7 +2,6 @@ import { UtilityService } from 'src/utility/Utility.service';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
 import { LoggingService } from 'src/logging/logging.service';
 
@@ -21,7 +20,7 @@ export class AuthService {
     const user = await this.userService.findOneByEmail(email);
 
     if (user) {
-      if (await bcrypt.compare(pass, user.password)) {
+      if (await this.utilityService.checkPassword(pass, user.password)) {
         this.loggingService.info(``);
         const { password, ...result } = user;
         return result;

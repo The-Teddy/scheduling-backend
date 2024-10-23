@@ -116,7 +116,7 @@ export class AuthController {
         });
       }
       if (result.hasCode) {
-        const user = await this.userService.updatePassword(
+        const user = await this.userService.recoverPassword(
           authUserDto.email,
           authUserDto.password,
         );

@@ -5,6 +5,7 @@ import {
   CreateUserDTO,
   UpdateDataUserDTO,
   UpdateEmailUserDTO,
+  UpdatePasswordDTO,
 } from './user.dto';
 import { hashSync as encrypt } from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
@@ -64,7 +65,8 @@ export class UserService {
       return null;
     }
 
-    const encryptedPassword = encrypt(password, 15);
+    const encryptedPassword =
+      await this.utilityService.encryptPassword(password);
 
     const binaryUUID = this.utilityService.generateUuidAndTransformInBuffer();
 
@@ -156,7 +158,7 @@ export class UserService {
     }
     return null;
   }
-  async updatePassword(
+  async recoverPassword(
     email: string,
     password: string,
   ): Promise<UserEntity | null> {
@@ -309,6 +311,95 @@ export class UserService {
       userNotFound: false,
       outTime: false,
       credentialsIsInvalid: false,
+    };
+  }
+  async updatePassword(
+    id: Buffer,
+    data: UpdatePasswordDTO,
+  ): Promise<
+    | BooleanObject<'userNotFound'>
+    | BooleanObject<'credentialsIsInvalid'>
+    | BooleanObject<'success'>
+  > {
+    const foundUser = await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+    if (!foundUser) {
+      this.loggingService.warning(
+        `Falha ao listar usuário com o ID ${this.utilityService.bufferToUuid(id)}: Usuário não encontrado.`,
+      );
+      return {
+        credentialsIsInvalid: false,
+        userNotFound: true,
+        success: false,
+      };
+    }
+    const samePassword = await this.utilityService.checkPassword(
+      data.password,
+      foundUser.password,
+    );
+
+    if (!samePassword) {
+      this.loggingService.warning(
+        `Falha ao atualizar senha do usuário com o ID ${this.utilityService.bufferToUuid(id)}: Senha inválida.`,
+      );
+      return {
+        credentialsIsInvalid: true,
+        userNotFound: false,
+        success: false,
+      };
+    }
+
+    const encryptedNewPassword = await this.utilityService.encryptPassword(
+      data.newPassword,
+    );
+    foundUser.password = encryptedNewPassword;
+
+    await this.userRepository.save(foundUser);
+
+    this.loggingService.info(
+      `Usuário com ID ${id} (${foundUser.name}) alterou a senha.`,
+    );
+
+    const HTMLContent = `
+      <p>Olá, <strong>${foundUser.name}</strong></p>
+      <p style="text-align: justify;">Estamos enviando este e-mail para confirmar que sua senha foi alterada com sucesso. Se você não solicitou essa alteração, por favor, entre em contato conosco imediatamente.</p>
+      <p style="text-align: justify;">Aqui estão algumas dicas de segurança para proteger sua conta: <br>
+        <ul style="text-align: start !important;">
+          <li>Use senhas únicas e seguras para cada serviço.</li>
+          <li>Ative a autenticação em duas etapas, se disponível.</li>
+          <li>Não compartilhe sua senha com ninguém.</li>
+        </ul>
+
+      </p>
+      <p style="text-align: justify;">Caso tenha qualquer dúvida ou precise de ajuda, estamos à disposição.</p>
+    `;
+    const textContent = `
+      Olá, ${foundUser.name} \n
+      Estamos enviando este e-mail para confirmar que sua senha foi alterada com sucesso. Se você não solicitou essa alteração, por favor, entre em contato conosco imediatamente.\n
+      Aqui estão algumas dicas de segurança para proteger sua conta:
+        Use senhas únicas e seguras para cada serviço. \n
+        Ative a autenticação em duas etapas, se disponível. \n
+        Não compartilhe sua senha com ninguém. \n
+      Caso tenha qualquer dúvida ou precise de ajuda, estamos à disposição.
+    `;
+    const formatedHTML = await this.utilityService.formatHTML(
+      'Atualização de Email Realizada com Sucesso',
+      HTMLContent,
+    );
+
+    await this.emailService.sendEmail(
+      foundUser.email,
+      'Atualização de Senha Realizada com Sucesso',
+      textContent,
+      formatedHTML,
+    );
+    return {
+      credentialsIsInvalid: false,
+      userNotFound: false,
+      success: true,
     };
   }
 }
