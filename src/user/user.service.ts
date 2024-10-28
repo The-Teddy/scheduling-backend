@@ -85,6 +85,7 @@ export class UserService {
   async findOneByEmail(email: string): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({
       where: { email },
+      relations: ['provider'],
     });
 
     if (!user) {

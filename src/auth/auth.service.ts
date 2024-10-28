@@ -118,6 +118,7 @@ export class AuthService {
       role: user.role,
       id: user.id,
     };
+
     this.loggingService.info(
       `Login bem-sucedido para o usuário de id ${this.utilityService.bufferToUuid(user.id)}`,
     );
@@ -132,6 +133,18 @@ export class AuthService {
           emailVerified: user.emailVerified,
           isActive: user.isActive,
           createdAt: user.createdAt,
+          business: user.provider
+            ? {
+                name: user.provider?.businessName,
+                about: user.provider?.about,
+                category: user.provider?.category,
+                url: user.provider?.url,
+                rating: user.provider?.rating,
+                logo: user.provider?.logo,
+                cover: user.provider?.cover,
+                hasAutomaticUpdate: user.provider?.hasAutomaticUpdate,
+              }
+            : null,
         },
       },
       emailNotVerified: !user.emailVerified,
