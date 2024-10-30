@@ -117,6 +117,7 @@ export class AuthService {
       isActive: user.isActive,
       role: user.role,
       id: user.id,
+      providerId: user.provider ? user.provider.id : null,
     };
 
     this.loggingService.info(
@@ -136,6 +137,7 @@ export class AuthService {
           business: user.provider
             ? {
                 name: user.provider?.businessName,
+                document: user.provider?.document,
                 about: user.provider?.about,
                 category: user.provider?.category,
                 url: user.provider?.url,

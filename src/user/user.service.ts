@@ -119,6 +119,7 @@ export class UserService {
       business: user.provider
         ? {
             name: user.provider?.businessName,
+            document: user.provider.document,
             about: user.provider?.about,
             category: user.provider?.category,
             url: user.provider?.url,
@@ -285,6 +286,8 @@ export class UserService {
       foundUser.email,
       data.email,
       false,
+      'aprovado',
+      true,
     );
 
     const HTMLContent = `

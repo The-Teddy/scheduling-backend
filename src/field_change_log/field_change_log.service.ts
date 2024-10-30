@@ -15,35 +15,38 @@ export class FieldchangeLogService {
   ) {}
 
   async createLog(
-    providerId: Buffer,
+    providerOrUserId: Buffer,
     fieldName: string,
     previousValue: any,
     newValue: any,
     isProviderId: boolean,
+    status: 'pendente' | 'aprovado' | 'rejeitado',
+    automaticUpdate: boolean,
     userJustification: string = null,
   ): Promise<FieldChangeLogEntity | null> {
     const createLog = this.fieldChangeLogRepository.create({
-      providerOrUserId: providerId,
+      providerOrUserId: providerOrUserId,
       fieldName: fieldName,
       previousValue: previousValue,
       newValue: newValue,
-      automaticUpdate: true,
+      automaticUpdate: automaticUpdate,
       userJustification: userJustification,
+      status: status,
       isProviderId: isProviderId,
     });
     const createdLog = await this.fieldChangeLogRepository.save(createLog);
     this.logginService.info(`
-      Log do campo ${fieldName} criado com sucesso para o usuário de id ${this.utilityService.bufferToUuid(providerId)}
+      Log do campo ${fieldName} criado com sucesso para o usuário de id ${this.utilityService.bufferToUuid(providerOrUserId)}
       `);
     return createdLog;
   }
   async showLog(
-    providerId: Buffer,
+    providerOrUserId: Buffer,
     fieldName: string,
   ): Promise<FieldChangeLogEntity | null> {
     const foundLog = await this.fieldChangeLogRepository.findOne({
       where: {
-        providerOrUserId: providerId,
+        providerOrUserId: providerOrUserId,
         fieldName: fieldName,
       },
       order: {
@@ -54,7 +57,7 @@ export class FieldchangeLogService {
     if (!foundLog) {
       if (!foundLog) {
         this.logginService.warning(`
-          Falha ao consultar o log do campo ${fieldName} para o usuário de id ${this.utilityService.bufferToUuid(providerId)}: Provedor não tem nenhum log cadastrado para o campo ${fieldName}
+          Falha ao consultar o log do campo ${fieldName} para o usuário de id ${this.utilityService.bufferToUuid(providerOrUserId)}: Provedor não tem nenhum log cadastrado para o campo ${fieldName}
           `);
         return null;
       }
@@ -63,7 +66,7 @@ export class FieldchangeLogService {
     }
 
     this.logginService.info(`
-      Sucesso ao consultar o log do campo ${fieldName} para o usuário de id ${this.utilityService.bufferToUuid(providerId)}
+      Sucesso ao consultar o log do campo ${fieldName} para o usuário de id ${this.utilityService.bufferToUuid(providerOrUserId)}
       `);
     return foundLog;
   }
