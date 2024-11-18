@@ -1,14 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ProviderEntity } from 'src/database/entities/providers.entity';
 import { Repository } from 'typeorm';
-import { CreateUpdateProviderDTO } from './create.provider.dto';
+import {
+  CreateUpdateProviderDTO,
+  UpdateDataProviderDTO,
+} from './createupdate.provider.dto';
 import { UtilityService } from 'src/utility/Utility.service';
 import { LoggingService } from 'src/logging/logging.service';
-import { BooleanObject } from 'src/interfaces/interfaces';
 import { timeToWaitInHours } from 'src/global/globalVariablesAndConstants';
 import { FieldchangeLogService } from 'src/field_change_log/field_change_log.service';
-import { UpdateCriticalResult } from 'src/global/types';
+import {
+  UpdateCriticalProviderResult,
+  UpdateDefaultProviderResult,
+} from 'src/global/types';
 import { ProviderResponses } from 'src/global/responses';
+import { BooleanObject } from 'src/interfaces/interfaces';
 
 @Injectable()
 export class ProviderService {
@@ -59,7 +65,7 @@ export class ProviderService {
     id: Buffer,
     name: string,
     provider: CreateUpdateProviderDTO,
-  ): Promise<UpdateCriticalResult> {
+  ): Promise<UpdateCriticalProviderResult> {
     const { url, businessName, category, document } = provider;
 
     const foundProvider = await this.providerRepository.findOne({
@@ -141,11 +147,86 @@ export class ProviderService {
     }
 
     foundProvider.hasAutomaticUpdate = true;
-    const savedProvider = await this.providerRepository.save(foundProvider);
+    await this.providerRepository.save(foundProvider);
 
     this.loggingService.info(
       `Empresa ${foundProvider.businessName} de id ${this.utilityService.bufferToUuid(id)} atualizou os dados criticos de maneira automatíca`,
     );
     return ProviderResponses.updateSuccessful;
+  }
+  async updateAbout(
+    id: Buffer,
+    body: UpdateDataProviderDTO,
+  ): Promise<UpdateDefaultProviderResult> {
+    const foundProvider = await this.providerRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!foundProvider) {
+      this.loggingService.warning(
+        `Falha ao atualizar campo about para a empresa ${foundProvider.businessName} id ${this.utilityService.bufferToUuid(id)}: Empresa não encontrada`,
+      );
+      return {
+        notFound: true,
+        success: false,
+      };
+    }
+    foundProvider.about = body.about;
+    foundProvider.phone_number_commercial = body.phoneNumber;
+    foundProvider.street = body.street;
+    foundProvider.number = body.number;
+    foundProvider.complement = body.complement;
+    foundProvider.reference = body.reference;
+    foundProvider.neighborhood = body.neighborhood;
+    foundProvider.city = body.city;
+    foundProvider.state = body.state;
+    foundProvider.postal_code = body.postalCode;
+
+    await this.providerRepository.save(foundProvider);
+
+    this.loggingService.info(
+      `Empresa ${foundProvider.businessName} de id ${this.utilityService.bufferToUuid(id)} atualizou os dados comuns`,
+    );
+    return {
+      success: true,
+      notFound: false,
+    };
+  }
+  async updateImageProvider(
+    id: Buffer,
+    imagePath: string | null,
+    isLogo: boolean,
+  ): Promise<UpdateDefaultProviderResult> {
+    const foundProvider = await this.providerRepository.findOne({
+      where: { id: id },
+    });
+
+    if (!foundProvider) {
+      this.loggingService.warning(
+        `Falha ao atualizar campo ${isLogo ? 'Logo' : 'Cover'} para a empresa ${foundProvider.businessName} id ${this.utilityService.bufferToUuid(id)}: Empresa não encontrada`,
+      );
+      return {
+        notFound: true,
+        success: false,
+      };
+    }
+
+    if (isLogo) {
+      foundProvider.logo = imagePath;
+    } else {
+      foundProvider.cover = imagePath;
+    }
+
+    await this.providerRepository.save(foundProvider);
+    this.loggingService.info(
+      `Empresa ${foundProvider.businessName} de id ${this.utilityService.bufferToUuid(id)} atualizou o campo ${isLogo ? 'Logo' : 'Cover'}`,
+    );
+
+    return {
+      success: true,
+      notFound: false,
+    };
   }
 }

@@ -30,9 +30,65 @@ export class CreateProvidersTable1725889551979 implements MigrationInterface {
             isNullable: true,
           },
           {
-            name: 'about',
-            type: 'text',
+            name: 'phone_number_commercial',
+            type: 'varchar',
             isNullable: true,
+            length: '15',
+          },
+          {
+            name: 'street',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'number',
+            type: 'varchar',
+            length: '50',
+            isNullable: true,
+          },
+
+          {
+            name: 'complement',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'reference',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'neighborhood',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'city',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'state',
+            type: 'varchar',
+            length: '2',
+            isNullable: true,
+          },
+          {
+            name: 'postal_code',
+            type: 'varchar',
+            length: '9',
+            isNullable: true,
+          },
+          {
+            name: 'about',
+            type: 'varchar',
+            isNullable: true,
+            length: '500',
           },
           {
             name: 'category',

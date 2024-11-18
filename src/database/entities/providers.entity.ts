@@ -29,7 +29,34 @@ export class ProviderEntity {
   @Column({ type: 'varchar', length: 18, nullable: true })
   document: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ nullable: true, length: 15 })
+  phone_number_commercial: string;
+
+  @Column({ nullable: true, length: 255 })
+  street: string;
+
+  @Column({ nullable: true, length: 50 })
+  number: string;
+
+  @Column({ nullable: true, length: 255 })
+  complement: string;
+
+  @Column({ nullable: true, length: 255 })
+  reference: string;
+
+  @Column({ nullable: true, length: 255 })
+  neighborhood: string;
+
+  @Column({ nullable: true, length: 255 })
+  city: string;
+
+  @Column({ nullable: true, length: 2 })
+  state: string;
+
+  @Column({ nullable: true, length: 9 })
+  postal_code: string;
+
+  @Column({ type: 'varchar', nullable: true, length: 500 })
   about: string;
 
   @Column({ type: 'varchar', length: 50 })

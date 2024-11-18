@@ -42,8 +42,10 @@ export class UpdateDataUserDTO {
 export class UpdateEmailUserDTO {
   @IsEmail()
   readonly email: string;
+
   @IsString()
   readonly password: string;
+
   @IsOptional()
   @IsSixDigitCode({
     message: 'O código deve ter exatamente 6 dígitos numéricos.',

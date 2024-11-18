@@ -45,18 +45,18 @@ export class UploadController {
     @Res() response: Response,
   ): Promise<any> {
     const user = request.user;
-    const { id }: any = user;
+    const { providerId }: any = user;
 
-    if (!user || !id || !id.data) {
+    if (!user || !providerId || !providerId.data) {
       this.loggingService.warning('Usuário não autenticado ou ID inválido');
       return response
         .status(HttpStatus.UNAUTHORIZED)
         .json({ message: 'Usuário não autenticado.' });
     }
-    const uuidBuffer = Buffer.from(id.data);
+    const uuidBuffer = Buffer.from(providerId.data);
     try {
       const oldPathLogo = request.body.old_path_logo;
-      await this.uploadService.updateImageUser(uuidBuffer, file.path, null);
+      await this.uploadService.updateImageProvider(uuidBuffer, file.path, true);
 
       if (oldPathLogo) {
         fs.unlink(oldPathLogo, (error) => {
@@ -74,7 +74,9 @@ export class UploadController {
         `Logo ${file.path} atualizada com sucesso pelo usuário de id ${this.utilityService.bufferToUuid(uuidBuffer)} em ${new Date().toISOString()}`,
       );
 
-      return response.status(200).json({ message: 'Upload feito com sucesso' });
+      return response
+        .status(200)
+        .json({ message: 'Logo atualizado com sucesso', logo: file.path });
     } catch (error) {
       if (file) {
         fs.unlink(file.path, function (error) {
@@ -115,19 +117,23 @@ export class UploadController {
     @Res() response: Response,
   ): Promise<any> {
     const user = request.user;
-    const { id }: any = user;
+    const { providerId }: any = user;
 
-    if (!user || !id || !id.data) {
+    if (!user || !providerId || !providerId.data) {
       this.loggingService.warning('Usuário não autenticado ou ID inválido');
       return response
         .status(HttpStatus.UNAUTHORIZED)
         .json({ message: 'Usuário não autenticado.' });
     }
-    const uuidBuffer = Buffer.from(id.data);
+    const uuidBuffer = Buffer.from(providerId.data);
     try {
       const oldPathCover = request.body.old_path_cover;
 
-      await this.uploadService.updateImageUser(uuidBuffer, null, file.path);
+      await this.uploadService.updateImageProvider(
+        uuidBuffer,
+        file.path,
+        false,
+      );
 
       if (oldPathCover) {
         fs.unlink(oldPathCover, (error) => {
@@ -140,14 +146,17 @@ export class UploadController {
           }
         });
       }
-      return response.sendStatus(200);
+      return response.status(HttpStatus.OK).json({
+        message: 'Capa atualizada com sucesso',
+        cover: file.path,
+      });
     } catch (error) {
       console.error(error);
       if (file) {
         fs.unlink(file.path, (error) => {
           if (error) {
             this.loggingService.error(
-              `Falha ao deletar capa ${file.path} em ${new Date().toISOString()}: ${error.message}`,
+              `Falha ao deletar capa ${file.path}: ${error.message}`,
             );
           } else {
             console.log('file deleted');

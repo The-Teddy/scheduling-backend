@@ -18,6 +18,6 @@ import { FieldChangeModule } from 'src/field_change_log/field_change_log.module'
     FieldChangeModule,
   ],
   providers: [...providerProviders, ProviderService],
-  exports: [],
+  exports: [ProviderService],
 })
 export class ProviderModule {}

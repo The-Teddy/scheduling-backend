@@ -1,15 +1,15 @@
-import { UserService } from 'src/user/user.service';
 import { Injectable } from '@nestjs/common';
+import { ProviderService } from 'src/provider/provider.service';
 
 @Injectable()
 export class UploadService {
-  constructor(private readonly usersService: UserService) {}
+  constructor(private readonly providerService: ProviderService) {}
 
-  async updateImageUser(
+  async updateImageProvider(
     id: Buffer,
     logoPath: string | null,
-    coverPath: string | null,
+    isLogo: boolean,
   ): Promise<any> {
-    return this.usersService.updateImageUser(id, logoPath, coverPath);
+    return this.providerService.updateImageProvider(id, logoPath, isLogo);
   }
 }

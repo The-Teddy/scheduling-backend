@@ -45,7 +45,7 @@ export class CategoryService {
       skip: (page - 1) * limit,
       take: limit,
       order: orderBy,
-      select: ['name', 'description'],
+      select: ['name', 'description', 'isActive', 'approvalStatus'],
       where: {
         isActive: true,
         approvalStatus: 'aprovado',

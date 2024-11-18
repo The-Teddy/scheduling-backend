@@ -24,7 +24,7 @@ export class CategoryController {
     private readonly loggingService: LoggingService,
   ) {}
 
-  @Post('create')
+  @Post()
   @UseGuards(JwtAuthGuard)
   async create(
     @Body() body: CreateCategoryDTO,
@@ -123,7 +123,7 @@ export class CategoryController {
       );
     }
   }
-  @Put('update')
+  @Put()
   @UseGuards(JwtAuthGuard)
   async update(
     @Body() updateCategoryDTO: UpdateCategoryDTO,

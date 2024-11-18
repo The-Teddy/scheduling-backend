@@ -40,6 +40,60 @@ export class CreateUsersTable1725889223533 implements MigrationInterface {
             isNullable: true,
           },
           {
+            name: 'phone_number_personal',
+            type: 'varchar',
+            isNullable: true,
+            length: '15',
+          },
+          {
+            name: 'street',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'number',
+            type: 'varchar',
+            length: '50',
+            isNullable: true,
+          },
+          {
+            name: 'complement',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'reference',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'neighborhood',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'city',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
+            name: 'state',
+            type: 'varchar',
+            length: '2',
+            isNullable: true,
+          },
+          {
+            name: 'postal_code',
+            type: 'varchar',
+            length: '9',
+            isNullable: true,
+          },
+          {
             name: 'isActive',
             type: 'boolean',
             default: true,
@@ -49,6 +103,7 @@ export class CreateUsersTable1725889223533 implements MigrationInterface {
             type: 'boolean',
             default: false,
           },
+
           {
             name: 'createdAt',
             type: 'timestamp',

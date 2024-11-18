@@ -11,7 +11,10 @@ import {
 } from '@nestjs/common';
 import { ProviderService } from './provider.service';
 import { Response, Request } from 'express';
-import { CreateUpdateProviderDTO } from './create.provider.dto';
+import {
+  CreateUpdateProviderDTO,
+  UpdateDataProviderDTO,
+} from './createupdate.provider.dto';
 import { LoggingService } from 'src/logging/logging.service';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
 import { UtilityService } from 'src/utility/Utility.service';
@@ -24,7 +27,7 @@ export class ProviderController {
     private readonly utilityService: UtilityService,
   ) {}
 
-  @Post('create')
+  @Post()
   @UseGuards(JwtAuthGuard)
   async create(
     @Body() createProviderDTO: CreateUpdateProviderDTO,
@@ -66,7 +69,7 @@ export class ProviderController {
       );
     }
   }
-  @Put('update-critical')
+  @Put('critical')
   @UseGuards(JwtAuthGuard)
   async updateCritical(
     @Req() request: Request,
@@ -113,6 +116,46 @@ export class ProviderController {
       this.loggingService.error(
         `Falha ao atualizar empresa '${body.businessName}' de (ID: ${this.utilityService.bufferToUuid(uuidBufferProvider)}): ${error.message}`,
       );
+      throw new HttpException(
+        'Falha ao atualizar dados da empresa. Por favor, tente novamente mais tarde',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  @Put('data')
+  @UseGuards(JwtAuthGuard)
+  async updateProviderAbout(
+    @Req() request: Request,
+    @Res() response: Response,
+    @Body() body: UpdateDataProviderDTO,
+  ): Promise<any> {
+    const user = request.user;
+    const { providerId }: any = user;
+
+    if (!user || !providerId || !providerId.data) {
+      this.loggingService.warning('Usuário não autenticado ou ID inválido');
+      return response
+        .status(HttpStatus.UNAUTHORIZED)
+        .json({ message: 'Usuário não autenticado.' });
+    }
+    const uuidBufferProvider = this.utilityService.uuidBuffer(providerId);
+
+    try {
+      const updatedProvider: any = await this.providerService.updateAbout(
+        uuidBufferProvider,
+        body,
+      );
+
+      if (updatedProvider.notFound) {
+        return response.status(HttpStatus.NOT_FOUND).json({
+          message: 'Empresa não econtrada',
+        });
+      }
+
+      response.status(HttpStatus.OK).json({
+        message: 'Dados atualizados com sucesso',
+      });
+    } catch (error) {
       throw new HttpException(
         'Falha ao atualizar dados da empresa. Por favor, tente novamente mais tarde',
         HttpStatus.INTERNAL_SERVER_ERROR,

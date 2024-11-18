@@ -7,9 +7,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { LoggingModule } from 'src/logging/logging.module';
 import { UtilityModule } from 'src/utility/Utility.module';
+import { ProviderModule } from 'src/provider/provider.module';
 
 @Module({
-  imports: [UserModule, JwtModule, LoggingModule, UtilityModule],
+  imports: [JwtModule, LoggingModule, UtilityModule, ProviderModule],
   controllers: [UploadController],
   providers: [UploadService, ConfigService],
 })

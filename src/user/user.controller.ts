@@ -32,7 +32,7 @@ export class UserController {
     private readonly utilityService: UtilityService,
   ) {}
 
-  @Post('create')
+  @Post()
   async create(
     @Body() createUserDto: CreateUserDTO,
     @Res() response: Response,
@@ -109,7 +109,7 @@ export class UserController {
       );
     }
   }
-  @Put('/update-data')
+  @Put()
   @UseGuards(JwtAuthGuard)
   async updateData(
     @Req() request: Request,
@@ -147,7 +147,7 @@ export class UserController {
       );
     }
   }
-  @Put('/change-email')
+  @Put('email')
   @UseGuards(JwtAuthGuard)
   async updateEmail(
     @Req() request: Request,
@@ -256,7 +256,7 @@ export class UserController {
       );
     }
   }
-  @Put('/change-password')
+  @Put('password')
   @UseGuards(JwtAuthGuard)
   async updatePassword(
     @Req() request: Request,

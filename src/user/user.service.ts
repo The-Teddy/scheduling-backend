@@ -127,6 +127,15 @@ export class UserService {
             logo: user.provider?.logo,
             cover: user.provider?.cover,
             hasAutomaticUpdate: user.provider?.hasAutomaticUpdate,
+            phoneNumberCommercial: user.provider?.phone_number_commercial,
+            street: user.provider?.street,
+            number: user.provider?.number,
+            complement: user.provider?.complement,
+            reference: user?.provider?.reference,
+            neighborhood: user?.provider?.neighborhood,
+            city: user?.provider?.city,
+            state: user?.provider?.state,
+            postalCode: user?.provider?.postal_code,
           }
         : null,
     };
@@ -175,22 +184,7 @@ export class UserService {
     await this.emailService.deleteCodeEmail(email);
     return await this.userRepository.save(user);
   }
-  async updateImageUser(
-    id: Buffer,
-    logoPath: string | null,
-    coverPath: string | null,
-  ): Promise<UserEntity | null> {
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
-    if (logoPath) {
-      // user.logo = logoPath;
-    }
-    if (coverPath) {
-      // user.cover = coverPath;
-    }
-    return await this.userRepository.save(user);
-  }
+
   async updateDataUser(
     id: Buffer,
     data: UpdateDataUserDTO,
